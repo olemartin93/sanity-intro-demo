@@ -3,6 +3,7 @@ import {dataset, projectId, studioUrl} from '@/sanity/lib/api'
 import {createDataAttribute, CreateDataAttributeProps} from 'next-sanity'
 import {createImageUrlBuilder, type SanityImageSource} from '@sanity/image-url'
 import {DereferencedLink} from '@/sanity/lib/types'
+import {localizePath, type Locale} from '@/i18n/config'
 
 const builder = createImageUrlBuilder({
   projectId: projectId || '',
@@ -27,7 +28,8 @@ export function resolveOpenGraphImage(
 }
 
 // Depending on the type of link, we need to fetch the corresponding page, post, or URL.  Otherwise return null.
-export function linkResolver(link: Link | DereferencedLink | undefined) {
+// Internal links get the current language prefix, e.g. /no/posts/my-post.
+export function linkResolver(link: Link | DereferencedLink | undefined, locale: Locale) {
   if (!link) return null
 
   // If linkType is not set but href is, lets set linkType to "href".  This comes into play when pasting links into the portable text editor because a link type is not assumed.
@@ -40,11 +42,11 @@ export function linkResolver(link: Link | DereferencedLink | undefined) {
       return link.href || null
     case 'page':
       if (link?.page && typeof link.page === 'string') {
-        return `/${link.page}`
+        return localizePath(locale, `/${link.page}`)
       }
     case 'post':
       if (link?.post && typeof link.post === 'string') {
-        return `/posts/${link.post}`
+        return localizePath(locale, `/posts/${link.post}`)
       }
     default:
       return null

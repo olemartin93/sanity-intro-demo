@@ -204,48 +204,13 @@ export type Button = {
   link?: Link
 }
 
-export type Lesson = {
-  _id: string
-  _type: 'lesson'
-  _createdAt: string
-  _updatedAt: string
-  _rev: string
-  title: string
-  slug: Slug
-  summary: string
-  duration?: number
-  content?: LessonContent
-  challenge?: Challenge
-}
-
-export type SanityImageCrop = {
-  _type: 'sanity.imageCrop'
-  top: number
-  bottom: number
-  left: number
-  right: number
-}
-
-export type SanityImageHotspot = {
-  _type: 'sanity.imageHotspot'
-  x: number
-  y: number
-  height: number
-  width: number
-}
-
-export type Slug = {
-  _type: 'slug'
-  current: string
-  source?: string
-}
-
 export type Guide = {
   _id: string
   _type: 'guide'
   _createdAt: string
   _updatedAt: string
   _rev: string
+  language?: string
   title: string
   description: string
   lessons?: Array<
@@ -261,6 +226,7 @@ export type Settings = {
   _createdAt: string
   _updatedAt: string
   _rev: string
+  language?: string
   title: string
   description?: Array<{
     children?: Array<{
@@ -295,71 +261,20 @@ export type Settings = {
   }
 }
 
-export type Page = {
-  _id: string
-  _type: 'page'
-  _createdAt: string
-  _updatedAt: string
-  _rev: string
-  name: string
-  slug: Slug
-  heading: string
-  subheading?: string
-  pageBuilder?: Array<
-    | ({
-        _key: string
-      } & CallToAction)
-    | ({
-        _key: string
-      } & InfoSection)
-  >
+export type SanityImageCrop = {
+  _type: 'sanity.imageCrop'
+  top: number
+  bottom: number
+  left: number
+  right: number
 }
 
-export type PersonReference = {
-  _ref: string
-  _type: 'reference'
-  _weak?: boolean
-  [internalGroqTypeReferenceTo]?: 'person'
-}
-
-export type Post = {
-  _id: string
-  _type: 'post'
-  _createdAt: string
-  _updatedAt: string
-  _rev: string
-  title: string
-  slug: Slug
-  content?: BlockContent
-  excerpt?: string
-  coverImage?: {
-    asset?: SanityImageAssetReference
-    media?: unknown
-    hotspot?: SanityImageHotspot
-    crop?: SanityImageCrop
-    alt?: string
-    _type: 'image'
-  }
-  date?: string
-  author?: PersonReference
-}
-
-export type Person = {
-  _id: string
-  _type: 'person'
-  _createdAt: string
-  _updatedAt: string
-  _rev: string
-  firstName: string
-  lastName: string
-  picture: {
-    asset?: SanityImageAssetReference
-    media?: unknown
-    hotspot?: SanityImageHotspot
-    crop?: SanityImageCrop
-    alt?: string
-    _type: 'image'
-  }
+export type SanityImageHotspot = {
+  _type: 'sanity.imageHotspot'
+  x: number
+  y: number
+  height: number
+  width: number
 }
 
 export type SanityAssistInstructionTask = {
@@ -499,6 +414,118 @@ export type SanityAssistSchemaTypeField = {
   >
 }
 
+export type TranslationMetadata = {
+  _id: string
+  _type: 'translation.metadata'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  translations?: InternationalizedArrayReference
+  schemaTypes?: Array<string>
+}
+
+export type InternationalizedArrayReference = Array<
+  {
+    _key: string
+  } & InternationalizedArrayReferenceValue
+>
+
+export type InternationalizedArrayReferenceValue = {
+  _type: 'internationalizedArrayReferenceValue'
+  value?: PostReference | PageReference | LessonReference
+  language: string
+}
+
+export type Lesson = {
+  _id: string
+  _type: 'lesson'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  language?: string
+  title: string
+  slug: Slug
+  summary: string
+  duration?: number
+  content?: LessonContent
+  challenge?: Challenge
+}
+
+export type Slug = {
+  _type: 'slug'
+  current: string
+  source?: string
+}
+
+export type PersonReference = {
+  _ref: string
+  _type: 'reference'
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: 'person'
+}
+
+export type Post = {
+  _id: string
+  _type: 'post'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  language?: string
+  title: string
+  slug: Slug
+  content?: BlockContent
+  excerpt?: string
+  coverImage?: {
+    asset?: SanityImageAssetReference
+    media?: unknown
+    hotspot?: SanityImageHotspot
+    crop?: SanityImageCrop
+    alt?: string
+    _type: 'image'
+  }
+  date?: string
+  author?: PersonReference
+}
+
+export type Person = {
+  _id: string
+  _type: 'person'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  firstName: string
+  lastName: string
+  picture: {
+    asset?: SanityImageAssetReference
+    media?: unknown
+    hotspot?: SanityImageHotspot
+    crop?: SanityImageCrop
+    alt?: string
+    _type: 'image'
+  }
+}
+
+export type Page = {
+  _id: string
+  _type: 'page'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  language?: string
+  name: string
+  slug: Slug
+  heading: string
+  subheading?: string
+  pageBuilder?: Array<
+    | ({
+        _key: string
+      } & CallToAction)
+    | ({
+        _key: string
+      } & InfoSection)
+  >
+}
+
 export type Code = {
   _type: 'code'
   language?: string
@@ -619,16 +646,10 @@ export type AllSanitySchemaTypes =
   | BlockContentTextOnly
   | BlockContent
   | Button
-  | Lesson
-  | SanityImageCrop
-  | SanityImageHotspot
-  | Slug
   | Guide
   | Settings
-  | Page
-  | PersonReference
-  | Post
-  | Person
+  | SanityImageCrop
+  | SanityImageHotspot
   | SanityAssistInstructionTask
   | SanityAssistTaskStatus
   | SanityAssistSchemaTypeAnnotations
@@ -642,6 +663,15 @@ export type AllSanitySchemaTypes =
   | SanityAssistInstructionFieldRef
   | SanityAssistInstruction
   | SanityAssistSchemaTypeField
+  | TranslationMetadata
+  | InternationalizedArrayReference
+  | InternationalizedArrayReferenceValue
+  | Lesson
+  | Slug
+  | PersonReference
+  | Post
+  | Person
+  | Page
   | Code
   | SanityImagePaletteSwatch
   | SanityImagePalette
@@ -654,13 +684,14 @@ export type AllSanitySchemaTypes =
 
 // Source: sanity/lib/queries.ts
 // Variable: settingsQuery
-// Query: *[_type == "settings"][0]
+// Query: *[_type == "settings" && coalesce(language, "en") == $language][0]
 export type SettingsQueryResult = {
   _id: string
   _type: 'settings'
   _createdAt: string
   _updatedAt: string
   _rev: string
+  language?: string
   title: string
   description?: Array<{
     children?: Array<{
@@ -697,7 +728,7 @@ export type SettingsQueryResult = {
 
 // Source: sanity/lib/queries.ts
 // Variable: getPageQuery
-// Query: *[_type == 'page' && slug.current == $slug][0]{    _id,    _type,    name,    slug,    heading,    subheading,    "pageBuilder": pageBuilder[]{      ...,      _type == "callToAction" => {        ...,        button {          ...,            link {      ...,        _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }      }        }      },      _type == "infoSection" => {        content[]{          ...,          markDefs[]{            ...,              _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }          }        }      },    },  }
+// Query: *[_type == 'page' && slug.current == $slug && coalesce(language, "en") == $language][0]{    _id,    _type,    name,    slug,    heading,    subheading,      "translations": *[_type == "translation.metadata" && references(^._id)][0].translations[]{    language,    "slug": value->slug.current  },    "pageBuilder": pageBuilder[]{      ...,      _type == "callToAction" => {        ...,        button {          ...,            link {      ...,        _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }      }        }      },      _type == "infoSection" => {        content[]{          ...,          markDefs[]{            ...,              _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }          }        }      },    },  }
 export type GetPageQueryResult = {
   _id: string
   _type: 'page'
@@ -705,6 +736,10 @@ export type GetPageQueryResult = {
   slug: Slug
   heading: string
   subheading: string | null
+  translations: Array<{
+    language: string
+    slug: string | null
+  }> | null
   pageBuilder: Array<
     | {
         _key: string
@@ -778,20 +813,23 @@ export type GetPageQueryResult = {
 
 // Source: sanity/lib/queries.ts
 // Variable: sitemapData
-// Query: *[_type in ["page", "post", "lesson"] && defined(slug.current)] | order(_type asc) {    "slug": slug.current,    _type,    _updatedAt,  }
+// Query: *[_type in ["page", "post", "lesson"] && defined(slug.current)] | order(_type asc) {    "slug": slug.current,    "language": coalesce(language, "en"),    _type,    _updatedAt,  }
 export type SitemapDataResult = Array<
   | {
       slug: string
+      language: string | 'en'
       _type: 'lesson'
       _updatedAt: string
     }
   | {
       slug: string
+      language: string | 'en'
       _type: 'page'
       _updatedAt: string
     }
   | {
       slug: string
+      language: string | 'en'
       _type: 'post'
       _updatedAt: string
     }
@@ -799,7 +837,7 @@ export type SitemapDataResult = Array<
 
 // Source: sanity/lib/queries.ts
 // Variable: allPostsQuery
-// Query: *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {      _id,  "status": select(_originalId in path("drafts.**") => "draft", "published"),  "title": coalesce(title, "Untitled"),  "slug": slug.current,  excerpt,  coverImage,  "date": coalesce(date, _updatedAt),  "author": author->{firstName, lastName, picture},  }
+// Query: *[_type == "post" && defined(slug.current) && coalesce(language, "en") == $language] | order(date desc, _updatedAt desc) {      _id,  "status": select(_originalId in path("drafts.**") => "draft", "published"),  "title": coalesce(title, "Untitled"),  "slug": slug.current,  excerpt,  coverImage,  "date": coalesce(date, _updatedAt),  "author": author->{firstName, lastName, picture},  }
 export type AllPostsQueryResult = Array<{
   _id: string
   status: 'draft' | 'published'
@@ -831,7 +869,7 @@ export type AllPostsQueryResult = Array<{
 
 // Source: sanity/lib/queries.ts
 // Variable: morePostsQuery
-// Query: *[_type == "post" && _id != $skip && defined(slug.current)] | order(date desc, _updatedAt desc) [0...$limit] {      _id,  "status": select(_originalId in path("drafts.**") => "draft", "published"),  "title": coalesce(title, "Untitled"),  "slug": slug.current,  excerpt,  coverImage,  "date": coalesce(date, _updatedAt),  "author": author->{firstName, lastName, picture},  }
+// Query: *[_type == "post" && _id != $skip && defined(slug.current) && coalesce(language, "en") == $language] | order(date desc, _updatedAt desc) [0...$limit] {      _id,  "status": select(_originalId in path("drafts.**") => "draft", "published"),  "title": coalesce(title, "Untitled"),  "slug": slug.current,  excerpt,  coverImage,  "date": coalesce(date, _updatedAt),  "author": author->{firstName, lastName, picture},  }
 export type MorePostsQueryResult = Array<{
   _id: string
   status: 'draft' | 'published'
@@ -863,7 +901,7 @@ export type MorePostsQueryResult = Array<{
 
 // Source: sanity/lib/queries.ts
 // Variable: postQuery
-// Query: *[_type == "post" && slug.current == $slug] [0] {    content[]{    ...,    markDefs[]{      ...,        _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }    }  },      _id,  "status": select(_originalId in path("drafts.**") => "draft", "published"),  "title": coalesce(title, "Untitled"),  "slug": slug.current,  excerpt,  coverImage,  "date": coalesce(date, _updatedAt),  "author": author->{firstName, lastName, picture},  }
+// Query: *[_type == "post" && slug.current == $slug && coalesce(language, "en") == $language] [0] {    content[]{    ...,    markDefs[]{      ...,        _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }    }  },      _id,  "status": select(_originalId in path("drafts.**") => "draft", "published"),  "title": coalesce(title, "Untitled"),  "slug": slug.current,  excerpt,  coverImage,  "date": coalesce(date, _updatedAt),  "author": author->{firstName, lastName, picture},      "translations": *[_type == "translation.metadata" && references(^._id)][0].translations[]{    language,    "slug": value->slug.current  },  }
 export type PostQueryResult = {
   content: Array<
     | {
@@ -924,27 +962,38 @@ export type PostQueryResult = {
       _type: 'image'
     }
   } | null
+  translations: Array<{
+    language: string
+    slug: string | null
+  }> | null
 } | null
 
 // Source: sanity/lib/queries.ts
 // Variable: postPagesSlugs
-// Query: *[_type == "post" && defined(slug.current)]  {"slug": slug.current}
+// Query: *[_type == "post" && defined(slug.current) && coalesce(language, "en") == $language]  {"slug": slug.current}
 export type PostPagesSlugsResult = Array<{
   slug: string
 }>
 
 // Source: sanity/lib/queries.ts
 // Variable: pagesSlugs
-// Query: *[_type == "page" && defined(slug.current)]  {"slug": slug.current}
+// Query: *[_type == "page" && defined(slug.current) && coalesce(language, "en") == $language]  {"slug": slug.current}
 export type PagesSlugsResult = Array<{
   slug: string
 }>
 
 // Source: sanity/lib/queries.ts
+// Variable: translatedSlugQuery
+// Query: *[_type == $type && slug.current == $slug][0]{    "slug": *[_type == "translation.metadata" && references(^._id)][0]      .translations[language == $language][0].value->slug.current  }
+export type TranslatedSlugQueryResult = {
+  slug: string | null
+} | null
+
+// Source: sanity/lib/queries.ts
 // Variable: guideQuery
-// Query: *[_type == "guide" && _id == "guide"][0]{    _id,    _type,    title,    description,    "lessons": lessons[defined(@->slug.current)]->{        _id,  _type,  title,  "slug": slug.current,  summary,  duration,  "hasChallenge": defined(challenge.title)    }  }
+// Query: *[_type == "guide" && language == $language][0]{    _id,    _type,    title,    description,    "lessons": lessons[defined(@->slug.current)]->{        _id,  _type,  title,  "slug": slug.current,  summary,  duration,  "hasChallenge": defined(challenge.title)    }  }
 export type GuideQueryResult = {
-  _id: 'guide'
+  _id: string
   _type: 'guide'
   title: string
   description: string
@@ -961,7 +1010,7 @@ export type GuideQueryResult = {
 
 // Source: sanity/lib/queries.ts
 // Variable: lessonQuery
-// Query: *[_type == "lesson" && slug.current == $slug][0]{    _id,    _type,    title,    "slug": slug.current,    summary,    duration,    content[]{      ...,      _type == "block" => {        markDefs[]{          ...,          _type == "lessonLink" => {            "slug": lesson->slug.current          }        }      }    },    challenge  }
+// Query: *[_type == "lesson" && slug.current == $slug && language == $language][0]{    _id,    _type,    title,    "slug": slug.current,    summary,    duration,    content[]{      ...,      _type == "block" => {        markDefs[]{          ...,          _type == "lessonLink" => {            "slug": lesson->slug.current          }        }      }    },    challenge,      "translations": *[_type == "translation.metadata" && references(^._id)][0].translations[]{    language,    "slug": value->slug.current  }  }
 export type LessonQueryResult = {
   _id: string
   _type: 'lesson'
@@ -1031,11 +1080,15 @@ export type LessonQueryResult = {
       }
   > | null
   challenge: Challenge | null
+  translations: Array<{
+    language: string
+    slug: string | null
+  }> | null
 } | null
 
 // Source: sanity/lib/queries.ts
 // Variable: lessonSlugs
-// Query: *[_type == "lesson" && defined(slug.current)]  {"slug": slug.current}
+// Query: *[_type == "lesson" && defined(slug.current) && language == $language]  {"slug": slug.current}
 export type LessonSlugsResult = Array<{
   slug: string
 }>
@@ -1043,17 +1096,18 @@ export type LessonSlugsResult = Array<{
 // Query TypeMap
 declare global {
   interface SanityQueries {
-    '*[_type == "settings"][0]': SettingsQueryResult
-    '\n  *[_type == \'page\' && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    slug,\n    heading,\n    subheading,\n    "pageBuilder": pageBuilder[]{\n      ...,\n      _type == "callToAction" => {\n        ...,\n        button {\n          ...,\n          \n  link {\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n      }\n\n        }\n      },\n      _type == "infoSection" => {\n        content[]{\n          ...,\n          markDefs[]{\n            ...,\n            \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n          }\n        }\n      },\n    },\n  }\n': GetPageQueryResult
-    '\n  *[_type in ["page", "post", "lesson"] && defined(slug.current)] | order(_type asc) {\n    "slug": slug.current,\n    _type,\n    _updatedAt,\n  }\n': SitemapDataResult
-    '\n  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': AllPostsQueryResult
-    '\n  *[_type == "post" && _id != $skip && defined(slug.current)] | order(date desc, _updatedAt desc) [0...$limit] {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': MorePostsQueryResult
-    '\n  *[_type == "post" && slug.current == $slug] [0] {\n    content[]{\n    ...,\n    markDefs[]{\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n    }\n  },\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': PostQueryResult
-    '\n  *[_type == "post" && defined(slug.current)]\n  {"slug": slug.current}\n': PostPagesSlugsResult
-    '\n  *[_type == "page" && defined(slug.current)]\n  {"slug": slug.current}\n': PagesSlugsResult
-    '\n  *[_type == "guide" && _id == "guide"][0]{\n    _id,\n    _type,\n    title,\n    description,\n    "lessons": lessons[defined(@->slug.current)]->{\n      \n  _id,\n  _type,\n  title,\n  "slug": slug.current,\n  summary,\n  duration,\n  "hasChallenge": defined(challenge.title)\n\n    }\n  }\n': GuideQueryResult
-    '\n  *[_type == "lesson" && slug.current == $slug][0]{\n    _id,\n    _type,\n    title,\n    "slug": slug.current,\n    summary,\n    duration,\n    content[]{\n      ...,\n      _type == "block" => {\n        markDefs[]{\n          ...,\n          _type == "lessonLink" => {\n            "slug": lesson->slug.current\n          }\n        }\n      }\n    },\n    challenge\n  }\n': LessonQueryResult
-    '\n  *[_type == "lesson" && defined(slug.current)]\n  {"slug": slug.current}\n': LessonSlugsResult
+    '*[_type == "settings" && coalesce(language, "en") == $language][0]': SettingsQueryResult
+    '\n  *[_type == \'page\' && slug.current == $slug && coalesce(language, "en") == $language][0]{\n    _id,\n    _type,\n    name,\n    slug,\n    heading,\n    subheading,\n    \n  "translations": *[_type == "translation.metadata" && references(^._id)][0].translations[]{\n    language,\n    "slug": value->slug.current\n  }\n,\n    "pageBuilder": pageBuilder[]{\n      ...,\n      _type == "callToAction" => {\n        ...,\n        button {\n          ...,\n          \n  link {\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n      }\n\n        }\n      },\n      _type == "infoSection" => {\n        content[]{\n          ...,\n          markDefs[]{\n            ...,\n            \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n          }\n        }\n      },\n    },\n  }\n': GetPageQueryResult
+    '\n  *[_type in ["page", "post", "lesson"] && defined(slug.current)] | order(_type asc) {\n    "slug": slug.current,\n    "language": coalesce(language, "en"),\n    _type,\n    _updatedAt,\n  }\n': SitemapDataResult
+    '\n  *[_type == "post" && defined(slug.current) && coalesce(language, "en") == $language] | order(date desc, _updatedAt desc) {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': AllPostsQueryResult
+    '\n  *[_type == "post" && _id != $skip && defined(slug.current) && coalesce(language, "en") == $language] | order(date desc, _updatedAt desc) [0...$limit] {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': MorePostsQueryResult
+    '\n  *[_type == "post" && slug.current == $slug && coalesce(language, "en") == $language] [0] {\n    content[]{\n    ...,\n    markDefs[]{\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n    }\n  },\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n    \n  "translations": *[_type == "translation.metadata" && references(^._id)][0].translations[]{\n    language,\n    "slug": value->slug.current\n  }\n,\n  }\n': PostQueryResult
+    '\n  *[_type == "post" && defined(slug.current) && coalesce(language, "en") == $language]\n  {"slug": slug.current}\n': PostPagesSlugsResult
+    '\n  *[_type == "page" && defined(slug.current) && coalesce(language, "en") == $language]\n  {"slug": slug.current}\n': PagesSlugsResult
+    '\n  *[_type == $type && slug.current == $slug][0]{\n    "slug": *[_type == "translation.metadata" && references(^._id)][0]\n      .translations[language == $language][0].value->slug.current\n  }\n': TranslatedSlugQueryResult
+    '\n  *[_type == "guide" && language == $language][0]{\n    _id,\n    _type,\n    title,\n    description,\n    "lessons": lessons[defined(@->slug.current)]->{\n      \n  _id,\n  _type,\n  title,\n  "slug": slug.current,\n  summary,\n  duration,\n  "hasChallenge": defined(challenge.title)\n\n    }\n  }\n': GuideQueryResult
+    '\n  *[_type == "lesson" && slug.current == $slug && language == $language][0]{\n    _id,\n    _type,\n    title,\n    "slug": slug.current,\n    summary,\n    duration,\n    content[]{\n      ...,\n      _type == "block" => {\n        markDefs[]{\n          ...,\n          _type == "lessonLink" => {\n            "slug": lesson->slug.current\n          }\n        }\n      }\n    },\n    challenge,\n    \n  "translations": *[_type == "translation.metadata" && references(^._id)][0].translations[]{\n    language,\n    "slug": value->slug.current\n  }\n\n  }\n': LessonQueryResult
+    '\n  *[_type == "lesson" && defined(slug.current) && language == $language]\n  {"slug": slug.current}\n': LessonSlugsResult
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too

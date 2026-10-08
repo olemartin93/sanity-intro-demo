@@ -2,13 +2,18 @@
 
 import {useId, useState} from 'react'
 
+import {format} from '@/i18n/config'
+import type {Dictionary} from '@/i18n/dictionaries/en'
 import {browserClient} from '@/sanity/lib/browser-client'
+
+type Labels = Dictionary['guide']
 
 type GroqPlaygroundProps = {
   title: string
   description?: string
   query: string
   params?: string
+  labels: Labels
 }
 
 type RunState =
@@ -17,18 +22,22 @@ type RunState =
   | {status: 'success'; result: unknown; ms: number}
   | {status: 'error'; message: string}
 
-function parseParams(params: string): Record<string, unknown> {
+function parseParams(params: string, labels: Labels): Record<string, unknown> {
   if (!params.trim()) return {}
   const parsed: unknown = JSON.parse(params)
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    throw new Error('Parameters must be a JSON object, for example {"type": "post"}')
+    throw new Error(labels.paramsInvalid)
   }
   return parsed as Record<string, unknown>
 }
 
-function describeResult(result: unknown) {
-  if (Array.isArray(result)) return `${result.length} ${result.length === 1 ? 'result' : 'results'}`
-  if (result === null) return 'null (nothing matched)'
+function describeResult(result: unknown, labels: Labels) {
+  if (Array.isArray(result)) {
+    return format(result.length === 1 ? labels.resultOne : labels.resultMany, {
+      count: result.length,
+    })
+  }
+  if (result === null) return labels.resultNull
   return typeof result
 }
 
@@ -41,6 +50,7 @@ export default function GroqPlayground({
   description,
   query,
   params = '',
+  labels,
 }: GroqPlaygroundProps) {
   const id = useId()
   const [currentQuery, setCurrentQuery] = useState(query)
@@ -50,14 +60,14 @@ export default function GroqPlayground({
   const run = async () => {
     setState({status: 'running'})
     try {
-      const response = await browserClient.fetch(currentQuery, parseParams(currentParams), {
+      const response = await browserClient.fetch(currentQuery, parseParams(currentParams, labels), {
         filterResponse: false,
       })
       setState({status: 'success', result: response.result, ms: response.ms})
     } catch (error) {
       setState({
         status: 'error',
-        message: error instanceof Error ? error.message : 'The query failed',
+        message: error instanceof Error ? error.message : labels.queryFailed,
       })
     }
   }
@@ -74,7 +84,7 @@ export default function GroqPlayground({
       className="not-prose my-8 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
     >
       <header className="border-b border-gray-200 bg-gray-50 px-4 py-3">
-        <p className="font-mono text-xs uppercase tracking-wide text-brand">Try it · GROQ</p>
+        <p className="font-mono text-xs uppercase tracking-wide text-brand">{labels.tryIt}</p>
         <h3 id={`${id}-title`} className="mt-1 font-medium text-gray-900">
           {title}
         </h3>
@@ -89,7 +99,7 @@ export default function GroqPlayground({
         }}
       >
         <label htmlFor={`${id}-query`} className="sr-only">
-          GROQ query
+          {labels.queryLabel}
         </label>
         <textarea
           id={`${id}-query`}
@@ -110,7 +120,7 @@ export default function GroqPlayground({
         {(params || currentParams) && (
           <div>
             <label htmlFor={`${id}-params`} className="font-mono text-xs text-gray-600">
-              Parameters (JSON)
+              {labels.paramsLabel}
             </label>
             <input
               id={`${id}-params`}
@@ -128,30 +138,32 @@ export default function GroqPlayground({
             disabled={state.status === 'running'}
             className="rounded-full bg-black px-5 py-2 font-mono text-sm text-white transition-colors hover:bg-blue disabled:opacity-60 cursor-pointer"
           >
-            {state.status === 'running' ? 'Running…' : 'Run query'}
+            {state.status === 'running' ? labels.running : labels.run}
           </button>
           <button
             type="button"
             onClick={reset}
             className="rounded-full px-3 py-2 font-mono text-sm text-gray-600 hover:text-black cursor-pointer"
           >
-            Reset
+            {labels.reset}
           </button>
-          <span className="hidden font-mono text-xs text-gray-400 sm:inline">⌘/Ctrl + Enter</span>
+          <span className="hidden font-mono text-xs text-gray-400 sm:inline">
+            {labels.shortcut}
+          </span>
         </div>
       </form>
 
       <div aria-live="polite">
         {state.status === 'error' && (
           <div className="border-t border-gray-200 bg-red-50 px-4 py-3">
-            <p className="font-mono text-xs uppercase tracking-wide text-red-700">Error</p>
+            <p className="font-mono text-xs uppercase tracking-wide text-red-700">{labels.error}</p>
             <p className="mt-1 font-mono text-sm break-words text-red-800">{state.message}</p>
           </div>
         )}
         {state.status === 'success' && (
           <div className="border-t border-gray-200">
             <p className="bg-gray-50 px-4 py-2 font-mono text-xs text-gray-600">
-              {describeResult(state.result)} · {state.ms} ms on the server
+              {describeResult(state.result, labels)} · {format(labels.serverTime, {ms: state.ms})}
             </p>
             <pre className="max-h-96 overflow-auto bg-gray-950 p-4 font-mono text-xs leading-relaxed text-gray-100">
               {JSON.stringify(state.result, null, 2)}

@@ -1,5 +1,7 @@
 import {BookIcon} from '@sanity/icons/Book'
 import {defineField, defineType} from 'sanity'
+import {isUniqueOtherThanLanguage} from '../../lib/i18n'
+import {languageField} from '../fields/language'
 
 /**
  * Lesson schema. Each lesson is one step in the interactive guide at /guide on the frontend.
@@ -18,6 +20,7 @@ export const lesson = defineType({
     {name: 'challenge', title: 'Challenge'},
   ],
   fields: [
+    languageField,
     defineField({
       name: 'title',
       title: 'Title',
@@ -33,6 +36,8 @@ export const lesson = defineType({
       options: {
         source: 'title',
         maxLength: 96,
+        // Translations can share a slug, so a lesson keeps its URL (and progress) in every language
+        isUnique: isUniqueOtherThanLanguage,
       },
       validation: (rule) => rule.required(),
     }),

@@ -5,8 +5,9 @@ import {useRouter} from 'next/navigation'
 import {useEffect, useTransition} from 'react'
 import {toast} from 'sonner'
 import {disableDraftMode} from '@/app/actions'
+import type {Dictionary} from '@/i18n/dictionaries/en'
 
-export default function DraftModeToast() {
+export default function DraftModeToast({labels}: {labels: Dictionary['draftMode']}) {
   const isPresentationTool = useIsPresentationTool()
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -16,11 +17,11 @@ export default function DraftModeToast() {
       /**
        * We delay the toast in case we're inside Presentation Tool
        */
-      const toastId = toast('Draft Mode Enabled', {
-        description: 'Content is live, refreshing automatically',
+      const toastId = toast(labels.enabled, {
+        description: labels.description,
         duration: Infinity,
         action: {
-          label: 'Disable',
+          label: labels.disable,
           onClick: async () => {
             await disableDraftMode()
             startTransition(() => {
@@ -33,16 +34,16 @@ export default function DraftModeToast() {
         toast.dismiss(toastId)
       }
     }
-  }, [router, isPresentationTool])
+  }, [router, isPresentationTool, labels])
 
   useEffect(() => {
     if (pending) {
-      const toastId = toast.loading('Disabling draft mode...')
+      const toastId = toast.loading(labels.disabling)
       return () => {
         toast.dismiss(toastId)
       }
     }
-  }, [pending])
+  }, [pending, labels])
 
   return null
 }

@@ -1,11 +1,15 @@
-export default function Footer() {
+import {getDictionary} from '@/i18n/server'
+
+export default async function Footer() {
+  const dict = await getDictionary()
+
   return (
     <footer className="bg-gray-50 relative">
       <div className="absolute inset-0 bg-[url(/images/tile-grid-black.png)] bg-size-[17px] opacity-20 bg-position-[0_1]" />
       <div className="container relative">
         <div className="flex flex-col items-center py-28 lg:flex-row">
           <h3 className="mb-10 text-center text-4xl font-mono leading-tight tracking-tighter lg:mb-0 lg:w-1/2 lg:pr-4 lg:text-left lg:text-2xl">
-            Built with Sanity + Next.js.
+            {dict.footer.builtWith}
           </h3>
           <div className="flex flex-col gap-3 items-center justify-center lg:w-1/2 lg:flex-row lg:pl-4">
             <a
@@ -14,10 +18,10 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              View on GitHub
+              {dict.footer.github}
             </a>
             <a href="https://nextjs.org/docs" className="mx-3 hover:underline font-mono">
-              Read Next.js Documentation
+              {dict.footer.nextDocs}
             </a>
           </div>
         </div>

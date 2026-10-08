@@ -1,8 +1,15 @@
 'use client'
 
-import {markComplete, markIncomplete, useCompletedLessons} from '@/app/guide/_lib/progress'
+import {markComplete, markIncomplete, useCompletedLessons} from '@/app/_guide/lib/progress'
+import type {Dictionary} from '@/i18n/dictionaries/en'
 
-export default function CompleteToggle({lessonSlug}: {lessonSlug: string}) {
+export default function CompleteToggle({
+  lessonSlug,
+  labels,
+}: {
+  lessonSlug: string
+  labels: Dictionary['guide']
+}) {
   const completed = useCompletedLessons()
   const isComplete = completed.includes(lessonSlug)
 
@@ -17,7 +24,7 @@ export default function CompleteToggle({lessonSlug}: {lessonSlug: string}) {
           : 'border-gray-300 bg-white text-gray-900 hover:border-black'
       }`}
     >
-      {isComplete ? '✓ Completed' : 'Mark lesson as complete'}
+      {isComplete ? labels.completed : labels.markComplete}
     </button>
   )
 }

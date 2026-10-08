@@ -11,6 +11,13 @@ import {createDataAttribute} from 'next-sanity'
 import {uuid} from '@sanity/uuid'
 
 import {studioUrl} from '@/sanity/lib/api'
+import {format, type Locale} from '@/i18n/config'
+import type {Dictionary} from '@/i18n/dictionaries/en'
+
+type OnboardingProps = {
+  locale: Locale
+  labels: Dictionary['onboarding']
+}
 
 type OnboardingMessageProps = {
   message: {
@@ -72,7 +79,7 @@ const OnboardingMessage = ({message, link, type, path}: OnboardingMessageProps) 
   )
 }
 
-export default function Onboarding() {
+export default function Onboarding({locale, labels}: OnboardingProps) {
   return (
     <div className="max-w-2xl mx-auto grid grid-flow-row gap-6 py-12 text-center bg-brand text-white rounded-lg p-8">
       <svg
@@ -102,12 +109,13 @@ export default function Onboarding() {
       </svg>
       <OnboardingMessage
         message={{
-          title: 'No posts yet',
-          description: 'Get started by creating a new post.',
+          title: labels.noPostsTitle,
+          description: labels.noPostsDescription,
         }}
         link={{
-          title: 'Create Post',
-          href: `${studioUrl}/structure/intent/create/template=post;type=post;path=title`,
+          title: labels.createPost,
+          // The `post-<language>` template (from the document-internationalization plugin) sets the language
+          href: `${studioUrl}/structure/intent/create/template=post-${locale};type=post;path=title`,
         }}
         type="post"
         path="title"
@@ -116,7 +124,7 @@ export default function Onboarding() {
   )
 }
 
-export function PageOnboarding() {
+export function PageOnboarding({locale, labels, slug}: OnboardingProps & {slug: string}) {
   return (
     <div className="max-w-2xl mx-auto grid grid-flow-row gap-6 py-12 text-center bg-brand text-white rounded-lg p-8">
       <svg
@@ -146,12 +154,12 @@ export function PageOnboarding() {
       </svg>
       <OnboardingMessage
         message={{
-          title: 'About Page (/about) does not exist yet',
-          description: 'Get started by creating an about page.',
+          title: format(labels.noPageTitle, {slug}),
+          description: labels.noPageDescription,
         }}
         link={{
-          title: 'Create Page',
-          href: `${studioUrl}/structure/intent/create/template=page;type=page;path=name`,
+          title: labels.createPage,
+          href: `${studioUrl}/structure/intent/create/template=page-${locale};type=page;path=name`,
         }}
         type="page"
         path="name"

@@ -2,7 +2,9 @@
 
 import {useState} from 'react'
 
-export default function GetStartedCode() {
+import type {Dictionary} from '@/i18n/dictionaries/en'
+
+export default function GetStartedCode({labels}: {labels: Dictionary['getStarted']}) {
   const [showTooltip, setShowTooltip] = useState(false)
 
   const handleCopy = () => {
@@ -19,9 +21,9 @@ export default function GetStartedCode() {
       <button
         className="text-white flex items-center gap-2 relative cursor-pointer bg-blue md:aspect-square px-4 py-2 md:p-2 rounded-xl md:rounded-full hover:bg-yellow hover:text-black transition-colors duration-300"
         onClick={handleCopy}
-        aria-label="Copy to clipboard"
+        aria-label={labels.copyLabel}
       >
-        <span className="md:hidden">{showTooltip ? 'Copied!' : 'Copy Snippet'}</span>
+        <span className="md:hidden">{showTooltip ? labels.copied : labels.copy}</span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -35,7 +37,7 @@ export default function GetStartedCode() {
             showTooltip ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
-          Copied!
+          {labels.copied}
         </span>
       </button>
     </div>

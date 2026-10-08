@@ -1,6 +1,26 @@
 import {defineQuery} from 'next-sanity'
 
-export const settingsQuery = defineQuery(`*[_type == "settings"][0]`)
+/**
+ * Localization: every query takes a `$language` parameter ("en" or "no").
+ *
+ * Documents without a language field (for example imported sample data, or content created
+ * before localization was added) are treated as English, the default language, so they keep
+ * showing up instead of silently disappearing.
+ */
+const languageFilter = /* groq */ `coalesce(language, "en") == $language`
+
+/**
+ * All language versions of a document, from the translation.metadata document created by the
+ * @sanity/document-internationalization plugin. Used for hreflang links in <head>.
+ */
+const translationsField = /* groq */ `
+  "translations": *[_type == "translation.metadata" && references(^._id)][0].translations[]{
+    language,
+    "slug": value->slug.current
+  }
+`
+
+export const settingsQuery = defineQuery(`*[_type == "settings" && ${languageFilter}][0]`)
 
 const postFields = /* groq */ `
   _id,
@@ -28,13 +48,14 @@ const linkFields = /* groq */ `
 `
 
 export const getPageQuery = defineQuery(`
-  *[_type == 'page' && slug.current == $slug][0]{
+  *[_type == 'page' && slug.current == $slug && ${languageFilter}][0]{
     _id,
     _type,
     name,
     slug,
     heading,
     subheading,
+    ${translationsField},
     "pageBuilder": pageBuilder[]{
       ...,
       _type == "callToAction" => {
@@ -60,25 +81,26 @@ export const getPageQuery = defineQuery(`
 export const sitemapData = defineQuery(`
   *[_type in ["page", "post", "lesson"] && defined(slug.current)] | order(_type asc) {
     "slug": slug.current,
+    "language": coalesce(language, "en"),
     _type,
     _updatedAt,
   }
 `)
 
 export const allPostsQuery = defineQuery(`
-  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {
+  *[_type == "post" && defined(slug.current) && ${languageFilter}] | order(date desc, _updatedAt desc) {
     ${postFields}
   }
 `)
 
 export const morePostsQuery = defineQuery(`
-  *[_type == "post" && _id != $skip && defined(slug.current)] | order(date desc, _updatedAt desc) [0...$limit] {
+  *[_type == "post" && _id != $skip && defined(slug.current) && ${languageFilter}] | order(date desc, _updatedAt desc) [0...$limit] {
     ${postFields}
   }
 `)
 
 export const postQuery = defineQuery(`
-  *[_type == "post" && slug.current == $slug] [0] {
+  *[_type == "post" && slug.current == $slug && ${languageFilter}] [0] {
     content[]{
     ...,
     markDefs[]{
@@ -87,22 +109,35 @@ export const postQuery = defineQuery(`
     }
   },
     ${postFields}
+    ${translationsField},
   }
 `)
 
 export const postPagesSlugs = defineQuery(`
-  *[_type == "post" && defined(slug.current)]
+  *[_type == "post" && defined(slug.current) && ${languageFilter}]
   {"slug": slug.current}
 `)
 
 export const pagesSlugs = defineQuery(`
-  *[_type == "page" && defined(slug.current)]
+  *[_type == "page" && defined(slug.current) && ${languageFilter}]
   {"slug": slug.current}
 `)
 
 /**
- * Guide queries. The guide singleton has a fixed _id, which is the most efficient way to fetch it.
- * Also filtering on _type lets TypeGen infer one precise result type instead of a union of all types.
+ * Finds the slug of a document's translation. When a visitor switches language on a page whose
+ * slug differs between languages (e.g. /en/about → /no/about), the page looks up the document
+ * by its slug in any language and redirects to its translation (e.g. /no/om).
+ */
+export const translatedSlugQuery = defineQuery(`
+  *[_type == $type && slug.current == $slug][0]{
+    "slug": *[_type == "translation.metadata" && references(^._id)][0]
+      .translations[language == $language][0].value->slug.current
+  }
+`)
+
+/**
+ * Guide queries. There is one guide per language (IDs "guide-en", "guide-no").
+ * Filtering on _type lets TypeGen infer one precise result type instead of a union of all types.
  * `lessons[...]->` follows each reference. The filter runs on the array of references *before*
  * following them (`@->` peeks at the target), and drops references to lessons that aren't
  * published yet. Filtering after `->` would run per item and turn every lesson into null.
@@ -118,7 +153,7 @@ const lessonListFields = /* groq */ `
 `
 
 export const guideQuery = defineQuery(`
-  *[_type == "guide" && _id == "guide"][0]{
+  *[_type == "guide" && language == $language][0]{
     _id,
     _type,
     title,
@@ -130,7 +165,7 @@ export const guideQuery = defineQuery(`
 `)
 
 export const lessonQuery = defineQuery(`
-  *[_type == "lesson" && slug.current == $slug][0]{
+  *[_type == "lesson" && slug.current == $slug && language == $language][0]{
     _id,
     _type,
     title,
@@ -148,11 +183,12 @@ export const lessonQuery = defineQuery(`
         }
       }
     },
-    challenge
+    challenge,
+    ${translationsField}
   }
 `)
 
 export const lessonSlugs = defineQuery(`
-  *[_type == "lesson" && defined(slug.current)]
+  *[_type == "lesson" && defined(slug.current) && language == $language]
   {"slug": slug.current}
 `)

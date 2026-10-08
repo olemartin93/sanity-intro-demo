@@ -7,9 +7,13 @@ import BlockRenderer from '@/app/components/BlockRenderer'
 import {GetPageQueryResult} from '@/sanity.types'
 import {dataAttr} from '@/sanity/lib/utils'
 import {PageBuilderSection} from '@/sanity/lib/types'
+import type {Dictionary} from '@/i18n/dictionaries/en'
+
+type Labels = Dictionary['pageBuilder']
 
 type PageBuilderPageProps = {
   page: GetPageQueryResult
+  labels: Labels
 }
 
 type PageData = {
@@ -25,9 +29,11 @@ type PageData = {
 function RenderSections({
   pageBuilderSections,
   page,
+  labels,
 }: {
   pageBuilderSections: PageBuilderSection[]
   page: GetPageQueryResult
+  labels: Labels
 }) {
   if (!page) {
     return null
@@ -47,13 +53,14 @@ function RenderSections({
           block={block}
           pageId={page._id}
           pageType={page._type}
+          labels={labels}
         />
       ))}
     </div>
   )
 }
 
-function RenderEmptyState({page}: {page: GetPageQueryResult}) {
+function RenderEmptyState({page, labels}: {page: GetPageQueryResult; labels: Labels}) {
   if (!page) {
     return null
   }
@@ -68,14 +75,14 @@ function RenderEmptyState({page}: {page: GetPageQueryResult}) {
       }).toString()}
     >
       <div className="prose">
-        <h2 className="">This page has no content!</h2>
-        <p className="">Open the page in Sanity Studio to add content.</p>
+        <h2 className="">{labels.emptyTitle}</h2>
+        <p className="">{labels.emptyDescription}</p>
       </div>
     </div>
   )
 }
 
-export default function PageBuilder({page}: PageBuilderPageProps) {
+export default function PageBuilder({page, labels}: PageBuilderPageProps) {
   const pageBuilderSections = useOptimistic<
     PageBuilderSection[] | undefined,
     SanityDocument<PageData>
@@ -101,8 +108,8 @@ export default function PageBuilder({page}: PageBuilderPageProps) {
   })
 
   return pageBuilderSections && pageBuilderSections.length > 0 ? (
-    <RenderSections pageBuilderSections={pageBuilderSections} page={page} />
+    <RenderSections pageBuilderSections={pageBuilderSections} page={page} labels={labels} />
   ) : (
-    <RenderEmptyState page={page} />
+    <RenderEmptyState page={page} labels={labels} />
   )
 }

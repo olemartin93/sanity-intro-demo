@@ -3,9 +3,11 @@ import Link from 'next/link'
 import {PortableText, type PortableTextBlock, type PortableTextComponents} from 'next-sanity'
 
 import Image from '@/app/components/SanityImage'
-import Callout from '@/app/guide/_components/Callout'
-import CodeBlock from '@/app/guide/_components/CodeBlock'
-import GroqPlayground from '@/app/guide/_components/GroqPlayground'
+import Callout from '@/app/_guide/components/Callout'
+import CodeBlock from '@/app/_guide/components/CodeBlock'
+import GroqPlayground from '@/app/_guide/components/GroqPlayground'
+import {localizePath, type Locale} from '@/i18n/config'
+import type {Dictionary} from '@/i18n/dictionaries/en'
 import type {LessonQueryResult} from '@/sanity.types'
 
 // Data from sanityFetch is typed as "stega branded": strings may contain invisible Visual Editing data
@@ -20,7 +22,7 @@ type ContentItem<T extends LessonContent[number]['_type']> = Extract<
  * schema needs a matching component in `types`, and every annotation needs one in `marks`.
  * Learn more: https://github.com/portabletext/react-portabletext
  */
-const components: PortableTextComponents = {
+const createComponents = (locale: Locale, labels: Dictionary['guide']): PortableTextComponents => ({
   types: {
     code: ({value}: {value: ContentItem<'code'>}) => (
       <CodeBlock code={value.code} language={value.language} filename={value.filename} />
@@ -35,6 +37,7 @@ const components: PortableTextComponents = {
         description={value.description}
         query={stegaClean(value.query)}
         params={stegaClean(value.params)}
+        labels={labels}
       />
     ),
     image: ({value}: {value: ContentItem<'image'>}) => {
@@ -80,11 +83,24 @@ const components: PortableTextComponents = {
     ),
     // lessonLink is resolved to a slug in the GROQ query, so no extra fetch is needed here
     lessonLink: ({children, value}) =>
-      value?.slug ? <Link href={`/guide/${value.slug}`}>{children}</Link> : <>{children}</>,
+      value?.slug ? (
+        <Link href={localizePath(locale, `/guide/${value.slug}`)}>{children}</Link>
+      ) : (
+        <>{children}</>
+      ),
   },
-}
+})
 
-export default function LessonPortableText({value}: {value: LessonContent}) {
+export default function LessonPortableText({
+  value,
+  locale,
+  labels,
+}: {
+  value: LessonContent
+  locale: Locale
+  labels: Dictionary['guide']
+}) {
+  const components = createComponents(locale, labels)
   return (
     <div className="prose prose-lg max-w-none prose-headings:tracking-tight prose-a:text-brand prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:font-normal prose-code:before:content-none prose-code:after:content-none">
       <PortableText components={components} value={value as PortableTextBlock[]} />

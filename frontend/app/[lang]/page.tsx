@@ -1,3 +1,4 @@
+import type {Metadata} from 'next'
 import {Suspense} from 'react'
 import Link from 'next/link'
 import {PortableText} from '@portabletext/react'
@@ -5,14 +6,32 @@ import {PortableText} from '@portabletext/react'
 import {AllPosts} from '@/app/components/Posts'
 import GetStartedCode from '@/app/components/GetStartedCode'
 import SideBySideIcons from '@/app/components/SideBySideIcons'
+import {localeTags, locales, localizePath} from '@/i18n/config'
+import {getDictionary, getLocale} from '@/i18n/server'
 import {settingsQuery} from '@/sanity/lib/queries'
 import {sanityFetch} from '@/sanity/lib/live'
 import {dataAttr} from '@/sanity/lib/utils'
 
+export function generateMetadata(): Metadata {
+  // hreflang links to the front page in every language
+  return {
+    alternates: {
+      languages: Object.fromEntries(
+        locales.map((locale) => [localeTags[locale], localizePath(locale)]),
+      ),
+    },
+  }
+}
+
 export default async function Page() {
-  const {data: settings} = await sanityFetch({
-    query: settingsQuery,
-  })
+  const locale = await getLocale()
+  const [{data: settings}, dict] = await Promise.all([
+    sanityFetch({
+      query: settingsQuery,
+      params: {language: locale},
+    }),
+    getDictionary(locale),
+  ])
 
   return (
     <>
@@ -23,7 +42,7 @@ export default async function Page() {
             <div className="relative min-h-[40vh] mx-auto max-w-2xl pt-10 xl:pt-20 pb-30 space-y-6 lg:max-w-4xl lg:px-12 flex flex-col items-center justify-center">
               <div className="flex flex-col gap-4 items-center">
                 <div className="text-md leading-6 prose uppercase py-1 px-3 bg-white font-mono italic">
-                  A starter template for
+                  {dict.home.eyebrow}
                 </div>
                 <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-black">
                   <Link
@@ -61,19 +80,19 @@ export default async function Page() {
               )}
               <div className="flex items-center flex-col gap-4">
                 <Link
-                  href="/guide"
+                  href={localizePath(locale, '/guide')}
                   className="not-prose inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 font-mono text-sm text-white no-underline transition-colors hover:bg-black md:text-base"
                 >
-                  New to Sanity? Start the interactive guide →
+                  {dict.home.guideCta}
                 </Link>
-                <GetStartedCode />
+                <GetStartedCode labels={dict.getStarted} />
                 <Link
                   href="https://www.sanity.io/docs"
                   className="inline-flex text-brand text-xs md:text-sm underline hover:text-gray-900"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Sanity Documentation
+                  {dict.home.sanityDocs}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"

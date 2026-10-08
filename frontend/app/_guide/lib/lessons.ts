@@ -1,4 +1,4 @@
-import type {LessonSummary} from '@/app/guide/_lib/types'
+import type {LessonSummary} from '@/app/_guide/lib/types'
 import type {GuideQueryResult} from '@/sanity.types'
 
 type GuideLessons = NonNullable<GuideQueryResult>['lessons']

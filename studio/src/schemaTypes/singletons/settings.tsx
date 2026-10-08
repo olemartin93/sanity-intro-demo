@@ -3,6 +3,7 @@ import {defineArrayMember, defineField, defineType} from 'sanity'
 import type {Link, Settings} from '../../../sanity.types'
 
 import * as demo from '../../lib/initialValues'
+import {languageField} from '../fields/language'
 
 /**
  * Settings schema Singleton.  Singletons are single documents that are displayed not in a collection, handy for things like site settings and other global configurations.
@@ -15,6 +16,7 @@ export const settings = defineType({
   type: 'document',
   icon: CogIcon,
   fields: [
+    languageField,
     defineField({
       name: 'title',
       description: 'This field is the title of your blog.',
@@ -158,9 +160,11 @@ export const settings = defineType({
     }),
   ],
   preview: {
-    prepare() {
+    select: {language: 'language'},
+    prepare({language}) {
       return {
         title: 'Settings',
+        subtitle: language?.toUpperCase(),
       }
     },
   },

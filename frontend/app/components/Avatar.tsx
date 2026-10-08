@@ -1,5 +1,6 @@
 import Image from '@/app/components/SanityImage'
 import DateComponent from '@/app/components/Date'
+import type {Locale} from '@/i18n/config'
 
 type Props = {
   person: {
@@ -14,9 +15,12 @@ type Props = {
   }
   date?: string
   small?: boolean
+  locale?: Locale
+  // The localized word shown before the name when there is no picture ("By" / "Av")
+  byLabel?: string
 }
 
-export default function Avatar({person, date, small = false}: Props) {
+export default function Avatar({person, date, small = false, locale, byLabel = 'By'}: Props) {
   const {firstName, lastName, picture} = person
 
   return (
@@ -35,7 +39,7 @@ export default function Avatar({person, date, small = false}: Props) {
           />
         </div>
       ) : (
-        <div className="mr-1">By </div>
+        <div className="mr-1">{byLabel} </div>
       )}
       <div className="flex flex-col">
         {firstName && lastName && (
@@ -44,7 +48,7 @@ export default function Avatar({person, date, small = false}: Props) {
           </div>
         )}
         <div className={`text-gray-500 ${small ? 'text-xs' : 'text-sm'}`}>
-          <DateComponent dateString={date} />
+          <DateComponent dateString={date} locale={locale} />
         </div>
       </div>
     </div>

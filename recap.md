@@ -4,6 +4,59 @@ A running log of major changes made to this project. Newest entries first.
 
 ---
 
+## 2026-10-08 — English/Norwegian i18n with a language switcher
+
+**Status:** Done, not yet committed. The Norwegian content is published in the `production` dataset.
+
+**Verified:**
+
+- Type-check, lint and Prettier pass; studio and frontend production builds succeed. All 26 lessons (13 per language) are pre-rendered.
+- On a production build:
+  - `/`, `/guide` etc. redirect (307) to `/en/...`, or to `/no/...` when the language cookie says so, keeping the query string.
+  - Every page returns 200 in both languages; unknown lessons return 404.
+  - `<html lang>` is `en`/`nb`, and lesson pages have hreflang links.
+  - The sitemap lists 15 URLs per language.
+  - The 404 page, header, footer and guide text are translated.
+- All 41 documents (26 lessons, 13 translation links, 2 guides) pass `sanity documents validate`. All 30 GROQ queries in the lessons were run against the dataset.
+- In Chrome:
+  - The EN/NO switcher keeps you on the same lesson, and progress carries over between languages.
+  - A Norwegian playground ran correctly with Draft Mode on.
+  - The chosen language is remembered for `/guide`.
+  - No console errors.
+  - The header fits at 320 px in both languages, after a fix.
+
+**Not verified:**
+
+- The Translations menu and AI translation in the Studio.
+- The redirect to a translated slug, because no page or post with a different slug exists yet; its query was checked against the lessons.
+- Presentation with `/:lang` routes.
+
+### How it works
+
+- **Routes:** everything moved under `frontend/app/[lang]/`, and the locale is always in the URL (Sanity's recommendation). `frontend/proxy.ts` redirects unprefixed URLs to the `NEXT_LOCALE` cookie's language, or English. `lang` is a root param, so Server Components call `getLocale()` / `getDictionary()` from `frontend/i18n/server.ts`.
+- **UI text:** `frontend/i18n/dictionaries/en.ts` and `no.ts`; `no` is typed by `en`, so missing keys fail type-check. Client Components get their strings as props. Dates use date-fns `nb`.
+- **Content:** `@sanity/document-internationalization` for `post`, `page` and `lesson`, using a hidden `language` field and `translation.metadata` links. `settings` and `guide` are localized singletons (`siteSettings-en/no`, `guide-en/no`). Slugs are unique per language. Queries take `$language` and treat documents without a language as English, so imported sample data still shows.
+- **Studio:** content is grouped by language in the structure. The "New document" menu only offers language-specific templates. AI Assist "Translate document" is set up with a style guide (Norwegian Bokmål, technical terms in English). Presentation routes include `/:lang`.
+- **Switcher:** `app/components/LanguageSwitcher.tsx` swaps the URL prefix and sets the cookie. If a translation uses a different slug, the target page redirects via `translation.metadata` (`frontend/i18n/translations.ts`).
+- **Guide content:** 13 Norwegian lessons in `studio/scripts/seed-guide/content.no.ts`, with the same slugs as the English ones so progress carries over. There is a new lesson, "Translate your site / Oversett nettstedet". English lessons were updated for the new paths and IDs. The old `guide` doc was migrated to `guide-en` and deleted.
+
+### Things to know
+
+- **Restart your dev server.** Files were moved while it was running, and it now serves stale modules: for example, `/no` showed the English "No posts yet" card, and AllPosts briefly failed with "param $language not provided". The production build is correct. Stop `npm run dev`, delete `frontend/.next`, and start it again.
+- The locale list exists in two places: `studio/src/lib/i18n.ts` and `frontend/i18n/config.ts`.
+- The GitHub button in the header is icon-only below the `sm` breakpoint, so the switcher fits on phones.
+- Error toasts in `client-utils.ts` (CORS and Live errors) are still in English; they are for developers.
+- Removed `frontend/sanity/lib/demo.ts`, which is no longer used.
+
+### Open follow-ups
+
+- [ ] Restart the dev server with a clean `frontend/.next`.
+- [ ] Try the Studio's Translations menu and "Translate document" on a page.
+- [ ] Check Presentation on `/en/...` and `/no/...` routes.
+- [ ] Commit the changes.
+
+---
+
 ## 2026-10-08 — Interactive Sanity guide at `/guide`
 
 **Status:** Done, not yet committed. Seed content is published in the `production` dataset (12 lessons + guide overview).

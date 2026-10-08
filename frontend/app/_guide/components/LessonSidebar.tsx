@@ -3,15 +3,19 @@
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 
-import {useCompletedLessons} from '@/app/guide/_lib/progress'
-import type {LessonSummary} from '@/app/guide/_lib/types'
+import {useCompletedLessons} from '@/app/_guide/lib/progress'
+import type {LessonSummary} from '@/app/_guide/lib/types'
+import {format, localizePath, type Locale} from '@/i18n/config'
+import type {Dictionary} from '@/i18n/dictionaries/en'
 
-function ProgressBar({done, total}: {done: number; total: number}) {
+type Labels = Dictionary['guide']
+
+function ProgressBar({done, total, labels}: {done: number; total: number; labels: Labels}) {
   const percent = total ? Math.round((done / total) * 100) : 0
   return (
     <div>
       <div className="flex justify-between font-mono text-xs text-gray-600">
-        <span>Your progress</span>
+        <span>{labels.yourProgress}</span>
         <span>
           {done} / {total}
         </span>
@@ -21,7 +25,7 @@ function ProgressBar({done, total}: {done: number; total: number}) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
-        aria-label="Guide progress"
+        aria-label={labels.progressLabel}
         className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200"
       >
         <div
@@ -33,14 +37,22 @@ function ProgressBar({done, total}: {done: number; total: number}) {
   )
 }
 
-function LessonLinks({lessons}: {lessons: LessonSummary[]}) {
+function LessonLinks({
+  lessons,
+  locale,
+  labels,
+}: {
+  lessons: LessonSummary[]
+  locale: Locale
+  labels: Labels
+}) {
   const pathname = usePathname()
   const completed = useCompletedLessons()
 
   return (
     <ol className="space-y-1">
       {lessons.map((lesson, index) => {
-        const href = `/guide/${lesson.slug}`
+        const href = localizePath(locale, `/guide/${lesson.slug}`)
         const isActive = pathname === href
         const isComplete = completed.includes(lesson.slug)
         return (
@@ -66,7 +78,7 @@ function LessonLinks({lessons}: {lessons: LessonSummary[]}) {
               </span>
               <span>
                 {lesson.title}
-                {isComplete && <span className="sr-only"> (completed)</span>}
+                {isComplete && <span className="sr-only"> {labels.completedSr}</span>}
               </span>
             </Link>
           </li>
@@ -76,32 +88,40 @@ function LessonLinks({lessons}: {lessons: LessonSummary[]}) {
   )
 }
 
-export default function LessonSidebar({lessons}: {lessons: LessonSummary[]}) {
+export default function LessonSidebar({
+  lessons,
+  locale,
+  labels,
+}: {
+  lessons: LessonSummary[]
+  locale: Locale
+  labels: Labels
+}) {
   const completed = useCompletedLessons()
   const done = lessons.filter((lesson) => completed.includes(lesson.slug)).length
 
   return (
-    <nav aria-label="Guide lessons">
+    <nav aria-label={labels.lessonsNav}>
       {/* Small screens: a collapsible list above the lesson */}
       <details className="rounded-lg border border-gray-200 bg-white p-4 lg:hidden">
         <summary className="cursor-pointer font-mono text-sm">
-          All lessons ({done}/{lessons.length} complete)
+          {format(labels.allLessons, {done, total: lessons.length})}
         </summary>
         <div className="mt-4">
-          <LessonLinks lessons={lessons} />
+          <LessonLinks lessons={lessons} locale={locale} labels={labels} />
         </div>
       </details>
 
       {/* Large screens: a sidebar (made sticky by the lesson layout) */}
       <div className="hidden max-h-[calc(100vh-8rem)] space-y-6 overflow-y-auto pb-8 lg:block">
         <Link
-          href="/guide"
+          href={localizePath(locale, '/guide')}
           className="font-mono text-xs uppercase tracking-wide text-gray-500 hover:text-black"
         >
-          ← Guide overview
+          {labels.backToOverview}
         </Link>
-        <ProgressBar done={done} total={lessons.length} />
-        <LessonLinks lessons={lessons} />
+        <ProgressBar done={done} total={lessons.length} labels={labels} />
+        <LessonLinks lessons={lessons} locale={locale} labels={labels} />
       </div>
     </nav>
   )

@@ -8,8 +8,19 @@ import DateComponent from '@/app/components/Date'
 import OnBoarding from '@/app/components/Onboarding'
 import Avatar from '@/app/components/Avatar'
 import {dataAttr} from '@/sanity/lib/utils'
+import {format, localizePath, type Locale} from '@/i18n/config'
+import type {Dictionary} from '@/i18n/dictionaries/en'
+import {getDictionary, getLocale} from '@/i18n/server'
 
-const Post = ({post}: {post: StegaBranded<AllPostsQueryResult[number]>}) => {
+const Post = ({
+  post,
+  locale,
+  dict,
+}: {
+  post: StegaBranded<AllPostsQueryResult[number]>
+  locale: Locale
+  dict: Dictionary
+}) => {
   const {_id, title, slug, excerpt, date, author} = post
 
   return (
@@ -18,7 +29,10 @@ const Post = ({post}: {post: StegaBranded<AllPostsQueryResult[number]>}) => {
       key={_id}
       className="border border-gray-200 rounded-sm p-6 bg-gray-50 flex flex-col justify-between transition-colors hover:bg-white relative"
     >
-      <Link className="hover:text-brand underline transition-colors" href={`/posts/${slug}`}>
+      <Link
+        className="hover:text-brand underline transition-colors"
+        href={localizePath(locale, `/posts/${slug}`)}
+      >
         <span className="absolute inset-0 z-10" />
       </Link>
       <div>
@@ -29,11 +43,11 @@ const Post = ({post}: {post: StegaBranded<AllPostsQueryResult[number]>}) => {
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
         {author && author.firstName && author.lastName && (
           <div className="flex items-center">
-            <Avatar person={author} small={true} />
+            <Avatar person={author} small={true} locale={locale} byLabel={dict.posts.by} />
           </div>
         )}
         <time className="text-gray-500 text-xs font-mono" dateTime={date}>
-          <DateComponent dateString={date} />
+          <DateComponent dateString={date} locale={locale} />
         </time>
       </div>
     </article>
@@ -57,38 +71,48 @@ const Posts = ({
 )
 
 export const MorePosts = async ({skip, limit}: {skip: string; limit: number}) => {
-  const {data} = await sanityFetch({
-    query: morePostsQuery,
-    params: {skip, limit},
-  })
+  const locale = await getLocale()
+  const [{data}, dict] = await Promise.all([
+    sanityFetch({
+      query: morePostsQuery,
+      params: {skip, limit, language: locale},
+    }),
+    getDictionary(locale),
+  ])
 
   if (!data || data.length === 0) {
     return null
   }
 
   return (
-    <Posts heading={`Recent Posts (${data?.length})`}>
+    <Posts heading={format(dict.posts.recentWithCount, {count: data.length})}>
       {data?.map((post) => (
-        <Post key={post._id} post={post} />
+        <Post key={post._id} post={post} locale={locale} dict={dict} />
       ))}
     </Posts>
   )
 }
 
 export const AllPosts = async () => {
-  const {data} = await sanityFetch({query: allPostsQuery})
+  const locale = await getLocale()
+  const [{data}, dict] = await Promise.all([
+    sanityFetch({query: allPostsQuery, params: {language: locale}}),
+    getDictionary(locale),
+  ])
 
   if (!data || data.length === 0) {
-    return <OnBoarding />
+    return <OnBoarding locale={locale} labels={dict.onboarding} />
   }
 
   return (
     <Posts
-      heading="Recent Posts"
-      subHeading={`${data.length === 1 ? 'This blog post is' : `These ${data.length} blog posts are`} populated from your Sanity Studio.`}
+      heading={dict.posts.recent}
+      subHeading={format(data.length === 1 ? dict.posts.populatedOne : dict.posts.populatedMany, {
+        count: data.length,
+      })}
     >
       {data.map((post) => (
-        <Post key={post._id} post={post} />
+        <Post key={post._id} post={post} locale={locale} dict={dict} />
       ))}
     </Posts>
   )

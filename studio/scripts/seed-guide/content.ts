@@ -1,8 +1,9 @@
 import {bullets, callout, code, h2, h3, p, playground, steps} from './portableText'
 
 /**
- * The starter content for the interactive guide at /guide. Each lesson becomes a `lesson`
- * document, and the guide singleton lists them in this order.
+ * The English starter content for the interactive guide at /en/guide. Each lesson becomes a
+ * `lesson` document with language "en", and the guide-en singleton lists them in this order.
+ * The Norwegian translations live in content.no.ts and use the same slugs.
  *
  * Edit the lessons in the Studio afterwards. Re-running the seed skips lessons that already exist
  * (matched by slug) unless you pass --force.
@@ -146,7 +147,7 @@ SANITY_API_READ_TOKEN="a Viewer token from sanity.io/manage"
       code('sh', `npx sanity cors add http://localhost:3000 --credentials`),
       h2('3. Tour the Studio'),
       ...bullets(
-        '**Structure** lists your content. Its layout is code in `studio/src/structure/index.ts`. That is why "Site Settings" and "Guide" are single items instead of lists.',
+        '**Structure** lists your content. Its layout is code in `studio/src/structure/index.ts`. That is why posts, pages and lessons are grouped by language, and "Site Settings" has one item per language.',
         '**Presentation** shows the website next to the editor. Click any text on the page to edit it. You will set this up in the Visual Editing lesson.',
         '**Vision** is a GROQ playground inside the Studio, for testing queries against your real data, including drafts.',
       ),
@@ -438,7 +439,7 @@ export const post = defineType({
 import {defineQuery} from 'next-sanity'
 
 export const lessonQuery = defineQuery(\`
-  *[_type == "lesson" && slug.current == $slug][0]{
+  *[_type == "lesson" && slug.current == $slug && language == $language][0]{
     _id,
     title,
     "slug": slug.current,
@@ -463,16 +464,20 @@ export const lessonQuery = defineQuery(\`
       code(
         'tsx',
         `
-export default async function LessonPage(props: PageProps<'/guide/[slug]'>) {
-  const params = await props.params
-  const {data: lesson} = await sanityFetch({query: lessonQuery, params})
+export default async function LessonPage(props: PageProps<'/[lang]/guide/[slug]'>) {
+  const {slug} = await props.params
+  const locale = await getLocale() // "en" or "no", read from the URL
+  const {data: lesson} = await sanityFetch({
+    query: lessonQuery,
+    params: {slug, language: locale},
+  })
 
   if (!lesson) notFound()
 
   return <h1>{lesson.title}</h1>
 }
         `,
-        'frontend/app/guide/[slug]/page.tsx',
+        'frontend/app/[lang]/guide/[slug]/page.tsx',
       ),
       h2('4. Static params and metadata'),
       ...bullets(
@@ -517,10 +522,10 @@ export default async function LessonPage(props: PageProps<'/guide/[slug]'>) {
         'groq',
         `
 // Result type: a union of every document type in the schema
-*[_id == "guide"][0]
+*[_id == "guide-en"][0]
 
 // Result type: exactly the guide
-*[_type == "guide" && _id == "guide"][0]
+*[_type == "guide" && _id == "guide-en"][0]
         `,
       ),
       callout(
@@ -570,8 +575,8 @@ presentationTool({
   resolve: {
     mainDocuments: defineDocuments([
       {
-        route: '/guide/:slug',
-        filter: \`_type == "lesson" && slug.current == $slug\`,
+        route: '/:lang/guide/:slug',
+        filter: \`_type == "lesson" && slug.current == $slug && language == $lang\`,
       },
     ]),
   },
@@ -638,7 +643,7 @@ defineField({
       ),
       h2('From array to components'),
       ...bullets(
-        '`app/[slug]/page.tsx` fetches the page with `getPageQuery`, which expands each block type.',
+        '`app/[lang]/[slug]/page.tsx` fetches the page in the current language with `getPageQuery`, which expands each block type.',
         '`PageBuilder.tsx` loops over the blocks. It uses `useOptimistic`, so reordering blocks in Presentation feels instant.',
         "`BlockRenderer.tsx` maps each block's `_type` to a React component, and uses the block's `_key` as the React key.",
       ),
@@ -660,10 +665,10 @@ defineField({
       title: 'Create the About page',
       instructions: [
         p(
-          'The header already links to `/about`, but the page doesn\'t exist yet. Create a page named "About" with the slug `about`, add at least one block to the page builder, and publish it.',
+          'The header already links to `/en/about`, but the page doesn\'t exist yet. In the Studio, open **Pages → Pages (English)**, create a page named "About" with the slug `about`, add at least one block to the page builder, and publish it.',
         ),
       ],
-      verificationQuery: `count(*[_type == "page" && slug.current == "about" && count(pageBuilder) > 0]) > 0`,
+      verificationQuery: `count(*[_type == "page" && slug.current == "about" && coalesce(language, "en") == "en" && count(pageBuilder) > 0]) > 0`,
       hint: 'Check that the slug is exactly "about" and that the page builder has at least one block.',
     },
   },
@@ -700,7 +705,7 @@ defineField({
       ),
       h2('Fonts'),
       p(
-        '`app/layout.tsx` loads Inter and IBM Plex Mono with `next/font`, which self-hosts them and avoids layout shift. They are exposed as CSS variables and used through `font-sans` and `font-mono`.',
+        '`app/[lang]/layout.tsx` loads Inter and IBM Plex Mono with `next/font`, which self-hosts them and avoids layout shift. They are exposed as CSS variables and used through `font-sans` and `font-mono`.',
       ),
       h2('Styling Portable Text'),
       p(
@@ -719,7 +724,7 @@ const components: PortableTextComponents = {
   },
 }
         `,
-        'frontend/app/guide/_components/LessonPortableText.tsx',
+        'frontend/app/_guide/components/LessonPortableText.tsx',
       ),
       h2('Let content choose, let code decide'),
       p(
@@ -736,7 +741,7 @@ const STYLES = {
 
 const className = STYLES[stegaClean(kind)] ?? STYLES.note
         `,
-        'frontend/app/guide/_components/Callout.tsx',
+        'frontend/app/_guide/components/Callout.tsx',
       ),
       h2('Images'),
       p(
@@ -763,15 +768,22 @@ const className = STYLES[stegaClean(kind)] ?? STYLES.note
     content: [
       h2('The singleton pattern'),
       p(
-        'Some documents should exist exactly once, like site settings or this guide\'s overview. Sanity has no "singleton" schema option. Instead, the Studio structure pins the document to a fixed ID:',
+        'Some documents should exist exactly once, like site settings or this guide\'s overview. Sanity has no "singleton" schema option. Instead, the Studio structure pins the document to a fixed ID. This site is multilingual, so there is one singleton per language, like `siteSettings-en` and `siteSettings-no`:',
       ),
       code(
         'typescript',
         `
-S.listItem()
-  .title('Site Settings')
-  .icon(CogIcon)
-  .child(S.document().schemaType('settings').documentId('siteSettings'))
+LANGUAGES.map((language) =>
+  S.listItem()
+    .title(\`Site Settings (\${language.title})\`)
+    .child(
+      S.document()
+        .schemaType('settings')
+        .documentId(\`siteSettings-\${language.id}\`)
+        // The template sets the document's language field
+        .initialValueTemplate(\`settings-\${language.id}\`),
+    ),
+)
         `,
         'studio/src/structure/index.ts',
       ),
@@ -790,11 +802,104 @@ S.listItem()
       title: 'Name your site',
       instructions: [
         p(
-          'Open **Site Settings** in the Studio, give the site a title, and publish. The new title appears in the header and the browser tab.',
+          'Open **Site Settings → Site Settings (English)** in the Studio, give the site a title, and publish. The new title appears in the header and the browser tab of the English site.',
         ),
       ],
-      verificationQuery: `defined(*[_type == "settings" && _id == "siteSettings"][0].title)`,
-      hint: 'Open "Site Settings" from the Studio sidebar and press Publish.',
+      verificationQuery: `defined(*[_type == "settings" && language == "en"][0].title)`,
+      hint: 'Open "Site Settings (English)" from the Studio sidebar and press Publish.',
+    },
+  },
+
+  // ---------------------------------------------------------------------------------------------
+  {
+    title: 'Translate your site',
+    slug: 'localization',
+    summary:
+      'See how this site serves English and Norwegian: language routes in Next.js, translated documents in Sanity, and a dictionary for interface text.',
+    duration: 12,
+    content: [
+      p(
+        'Switch to **NO** in the header and this lesson is in Norwegian. Three pieces work together to make that happen: the URL decides the language, Sanity stores one document per language, and a small dictionary translates the interface around the content.',
+      ),
+      h2('1. The language lives in the URL'),
+      p(
+        'Every page is under `app/[lang]/`, so URLs look like `/en/guide` and `/no/guide`. Search engines can index each language, and a link always opens the language it was shared in.',
+      ),
+      ...bullets(
+        '`frontend/proxy.ts` redirects URLs without a language. It uses the language the visitor picked last time (a cookie set by the switcher), or English, the default.',
+        'The root layout lives in `app/[lang]/layout.tsx`, which makes `lang` a **root param**. Any Server Component can read it with `getLocale()`, without passing it down as a prop.',
+        'Pages tell search engines about their other languages with hreflang links, built from the translations in Sanity.',
+      ),
+      code(
+        'typescript',
+        `
+import {lang} from 'next/root-params'
+import {notFound} from 'next/navigation'
+
+export async function getLocale() {
+  const locale = await lang()
+  if (!hasLocale(locale)) notFound()
+  return locale
+}
+        `,
+        'frontend/i18n/server.ts',
+      ),
+      h2('2. One document per language'),
+      p(
+        'Posts, pages and lessons use **document-level localization** with the `@sanity/document-internationalization` plugin. Each language version is its own document with a `language` field, so it can be edited and published on its own schedule.',
+      ),
+      ...bullets(
+        'Open any lesson in the Studio and use the **Translations** menu to create or open the other language versions.',
+        'The plugin links the versions with a `translation.metadata` document, which holds a reference to each one.',
+        'Slugs only need to be unique within a language. The lessons share their slugs across languages, so your progress follows you when you switch.',
+        'Singletons like Site Settings and the guide overview get one fixed ID per language, like `guide-en` and `guide-no`.',
+      ),
+      callout(
+        'tip',
+        'Document-level or field-level?',
+        'Translate whole documents when the languages are edited and published independently, like articles and pages. For things that are mostly shared, like a person with a name, a photo and a bio, translate single fields instead with `sanity-plugin-internationalized-array`.',
+      ),
+      p('Every query then filters on the language from the URL:'),
+      playground(
+        'Lessons in one language',
+        `*[_type == "lesson" && language == $language] | order(title asc){
+  title,
+  language,
+  "slug": slug.current
+}`,
+        {params: {language: 'no'}},
+      ),
+      playground(
+        'Find the translations of a lesson',
+        `*[_type == "lesson" && slug.current == "localization" && language == "en"][0]{
+  title,
+  "translations": *[_type == "translation.metadata" && references(^._id)][0]
+    .translations[]{language, "title": value->title}
+}`,
+        {description: 'references(^._id) finds the metadata document that points to this lesson.'},
+      ),
+      h2('3. A dictionary for interface text'),
+      p(
+        "Buttons, labels and headings that aren't content live in `frontend/i18n/dictionaries/en.ts` and `no.ts`. The Norwegian file is typed with the English one, so TypeScript reports any missing translation. Dictionaries are loaded on the server only, and Client Components get the strings they need as props.",
+      ),
+      callout(
+        'note',
+        'Translate with AI Assist',
+        'The Studio has AI Assist set up with a translation style guide: Norwegian Bokmål prose with technical terms kept in English. Open an English document, create the Norwegian version from the Translations menu, and run **Translate document** from the AI Assist menu.',
+      ),
+    ],
+    challenge: {
+      title: 'Translate the About page',
+      instructions: [
+        p(
+          'Open the English About page from the page builder lesson, and use the **Translations** menu to create a Norwegian version. Give it a Norwegian name, set the slug to `om`, and publish it.',
+        ),
+        p(
+          "Then visit `/en/about` and click **NO** in the header. The switcher sends you to `/no/about`, which doesn't exist, so the site finds the translation and redirects you to `/no/om`.",
+        ),
+      ],
+      verificationQuery: `count(*[_type == "translation.metadata" && "page" in schemaTypes && count(translations[language in ["en", "no"]]) == 2]) > 0`,
+      hint: 'Create the Norwegian version from the Translations menu on the English page, so the two are linked, and publish it.',
     },
   },
 

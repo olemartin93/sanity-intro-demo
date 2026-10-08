@@ -10,14 +10,21 @@ import Image from '@/app/components/SanityImage'
 import {sanityFetch} from '@/sanity/lib/live'
 import {postPagesSlugs, postQuery} from '@/sanity/lib/queries'
 import {resolveOpenGraphImage} from '@/sanity/lib/utils'
+import {getDictionary, getLocale} from '@/i18n/server'
+import {alternateLanguages, redirectToTranslation} from '@/i18n/translations'
+
+const toPath = (slug: string) => `/posts/${slug}`
 
 /**
  * Generate the static params for the page.
  * Learn more: https://nextjs.org/docs/app/api-reference/functions/generate-static-params
  */
 export async function generateStaticParams() {
+  // Runs once per language from the root layout's generateStaticParams; `lang` is a root param
+  const locale = await getLocale()
   const {data} = await sanityFetch({
     query: postPagesSlugs,
+    params: {language: locale},
     // Use the published perspective in generateStaticParams
     perspective: 'published',
     stega: false,
@@ -30,13 +37,14 @@ export async function generateStaticParams() {
  * Learn more: https://nextjs.org/docs/app/api-reference/functions/generate-metadata#generatemetadata-function
  */
 export async function generateMetadata(
-  props: PageProps<'/posts/[slug]'>,
+  props: PageProps<'/[lang]/posts/[slug]'>,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const params = await props.params
+  const {slug} = await props.params
+  const locale = await getLocale()
   const {data: post} = await sanityFetch({
     query: postQuery,
-    params,
+    params: {slug, language: locale},
     // Metadata should never contain stega
     stega: false,
   })
@@ -50,17 +58,24 @@ export async function generateMetadata(
         : [],
     title: post?.title,
     description: post?.excerpt,
+    alternates: alternateLanguages(post?.translations, toPath),
     openGraph: {
       images: ogImage ? [ogImage, ...previousImages] : previousImages,
     },
   } satisfies Metadata
 }
 
-export default async function PostPage(props: PageProps<'/posts/[slug]'>) {
-  const params = await props.params
-  const [{data: post}] = await Promise.all([sanityFetch({query: postQuery, params})])
+export default async function PostPage(props: PageProps<'/[lang]/posts/[slug]'>) {
+  const {slug} = await props.params
+  const locale = await getLocale()
+  const [{data: post}, dict] = await Promise.all([
+    sanityFetch({query: postQuery, params: {slug, language: locale}}),
+    getDictionary(locale),
+  ])
 
   if (!post?._id) {
+    // The post may exist in another language under a different slug
+    await redirectToTranslation('post', slug, locale, toPath)
     return notFound()
   }
 
@@ -75,7 +90,12 @@ export default async function PostPage(props: PageProps<'/posts/[slug]'>) {
               </div>
               <div className="max-w-3xl flex gap-4 items-center">
                 {post.author && post.author.firstName && post.author.lastName && (
-                  <Avatar person={post.author} date={post.date} />
+                  <Avatar
+                    person={post.author}
+                    date={post.date}
+                    locale={locale}
+                    byLabel={dict.posts.by}
+                  />
                 )}
               </div>
             </div>
