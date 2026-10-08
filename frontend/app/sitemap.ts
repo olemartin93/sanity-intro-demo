@@ -21,18 +21,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 1,
     changeFrequency: 'monthly',
   })
+  sitemap.push({
+    url: `${domain}/guide`,
+    lastModified: new Date(),
+    priority: 0.8,
+    changeFrequency: 'monthly',
+  })
 
   if (allPostsAndPages != null && allPostsAndPages.data.length != 0) {
     let priority: number
     let changeFrequency:
-      | 'monthly'
-      | 'always'
-      | 'hourly'
-      | 'daily'
-      | 'weekly'
-      | 'yearly'
-      | 'never'
-      | undefined
+      'monthly' | 'always' | 'hourly' | 'daily' | 'weekly' | 'yearly' | 'never' | undefined
     let url: string
 
     for (const p of allPostsAndPages.data) {
@@ -46,6 +45,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority = 0.5
           changeFrequency = 'never'
           url = `${domain}/posts/${p.slug}`
+          break
+        case 'lesson':
+          priority = 0.7
+          changeFrequency = 'monthly'
+          url = `${domain}/guide/${p.slug}`
           break
       }
       sitemap.push({

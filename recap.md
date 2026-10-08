@@ -4,6 +4,50 @@ A running log of major changes made to this project. Newest entries first.
 
 ---
 
+## 2026-10-08 — Interactive Sanity guide at `/guide`
+
+**Status:** Done, not yet committed. Seed content is published in the `production` dataset (12 lessons + guide overview).
+
+**Verified:**
+
+- Type-check, lint and Prettier pass; studio and frontend production builds succeed.
+- All 12 lesson pages and `/guide` return 200 from a production build; unknown slugs return 404; lessons appear in `sitemap.xml`.
+- All 13 seeded documents pass `sanity documents validate`; every GROQ query in the lessons was parsed and run against the dataset.
+- In Chrome on the dev server: a playground query ran, "Check my work" failed correctly with its hint, "Mark as complete" updated the sidebar, progress bar and overview, and there were no console or hydration errors.
+
+**Not verified:** Presentation / Visual Editing on the guide pages, the mobile layout, and a "Check my work" that passes.
+
+### What was built
+
+- **Content model (studio):** `lesson` document, `guide` singleton (fixed ID `guide`, ordered lesson references), and the `lessonContent` Portable Text type with custom blocks: `code` (via `@sanity/code-input`), `callout`, `groqPlayground`, and images. `challenge` is an object type with an optional GROQ verification query.
+- **Studio:** a "Guide" section in the structure; singletons (`settings`, `guide`) hidden from "Create new" and limited to publish/discard/restore; Presentation routes and locations for `/guide` and `/guide/:slug`.
+- **Frontend:** `/guide` overview and `/guide/[slug]` lesson pages (with `generateStaticParams`, metadata with `stega: false`, `notFound`). The lesson layout has a sticky sidebar. Code is highlighted server-side with Shiki and has a copy button. GROQ playgrounds and challenge checks run in the browser through a token-less client (`sanity/lib/browser-client.ts`). Progress is stored in localStorage via `useSyncExternalStore`.
+- **Site:** "Guide" link in the header, a call to action on the home page, and lessons in the sitemap.
+- **Seed:** `npm run seed:guide` (with `-- --force` to overwrite). It runs `studio/scripts/seed-guide/` with your CLI login, matches lessons by slug, lets Sanity generate lesson IDs, and only appends missing lessons to the guide.
+
+### Bugs found and fixed along the way
+
+1. **`Cta.tsx` (existing template bug):** `theme === 'dark'` lacked `stegaClean()`, so dark CTAs rendered light in Presentation.
+2. **`sitemapData` query (existing):** operator precedence meant `defined(slug.current)` only applied to posts. Now uses `_type in [...]`.
+3. **Guide query:** `lessons[]->[defined(slug.current)]` returns all nulls (the filter runs per item). Fixed to `lessons[defined(@->slug.current)]->`. TypeGen didn't catch it. This is now a callout in the GROQ lesson.
+4. **Seed `--force`:** `patch().unset().set()` wiped the challenges, because Sanity applies `unset` after `set` within one patch. Now uses `createOrReplace` with the looked-up ID.
+5. **Sticky sidebar:** the sticky element's parent was only as tall as the sidebar. The grid `<aside>` is now sticky.
+
+### Things to know
+
+- Playgrounds and checks only see **published** content in a **public** dataset (the dataset is public). Your production origin must be in CORS origins.
+- Shiki has no GROQ grammar, so GROQ snippets render unhighlighted.
+- One frontend build crashed once with Windows exit code `0xC0000409`. It did not happen again in later builds.
+- New dependencies: `@sanity/code-input` (studio) and `shiki` (frontend).
+
+### Open follow-ups
+
+- [ ] Click through the guide in Presentation to check Visual Editing overlays on lesson pages.
+- [ ] Check the mobile layout (collapsible lesson list).
+- [ ] Commit the changes.
+
+---
+
 ## 2026-10-08 — Upgrade to Sanity 6.18.0
 
 **Status:** Done, not yet committed.

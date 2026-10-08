@@ -13,11 +13,13 @@
     "predev": "npm run sanity:typegen",
     "dev": "sanity dev",
     "sanity:typegen": "sanity schema extract --enforce-required-fields --force --path ../sanity.schema.json && sanity typegen generate",
+    "seed:guide": "sanity exec scripts/seed-guide/index.ts --with-user-token --",
     "start": "sanity start",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@sanity/assist": "^6.2.2",
+    "@sanity/code-input": "^7.3.9",
     "@sanity/icons": "^5.2.3",
     "@sanity/vision": "^6.18.0",
     "date-fns": "^4.4.0",

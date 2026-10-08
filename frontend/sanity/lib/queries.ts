@@ -58,7 +58,7 @@ export const getPageQuery = defineQuery(`
 `)
 
 export const sitemapData = defineQuery(`
-  *[_type == "page" || _type == "post" && defined(slug.current)] | order(_type asc) {
+  *[_type in ["page", "post", "lesson"] && defined(slug.current)] | order(_type asc) {
     "slug": slug.current,
     _type,
     _updatedAt,
@@ -97,5 +97,62 @@ export const postPagesSlugs = defineQuery(`
 
 export const pagesSlugs = defineQuery(`
   *[_type == "page" && defined(slug.current)]
+  {"slug": slug.current}
+`)
+
+/**
+ * Guide queries. The guide singleton has a fixed _id, which is the most efficient way to fetch it.
+ * Also filtering on _type lets TypeGen infer one precise result type instead of a union of all types.
+ * `lessons[...]->` follows each reference. The filter runs on the array of references *before*
+ * following them (`@->` peeks at the target), and drops references to lessons that aren't
+ * published yet. Filtering after `->` would run per item and turn every lesson into null.
+ */
+const lessonListFields = /* groq */ `
+  _id,
+  _type,
+  title,
+  "slug": slug.current,
+  summary,
+  duration,
+  "hasChallenge": defined(challenge.title)
+`
+
+export const guideQuery = defineQuery(`
+  *[_type == "guide" && _id == "guide"][0]{
+    _id,
+    _type,
+    title,
+    description,
+    "lessons": lessons[defined(@->slug.current)]->{
+      ${lessonListFields}
+    }
+  }
+`)
+
+export const lessonQuery = defineQuery(`
+  *[_type == "lesson" && slug.current == $slug][0]{
+    _id,
+    _type,
+    title,
+    "slug": slug.current,
+    summary,
+    duration,
+    content[]{
+      ...,
+      _type == "block" => {
+        markDefs[]{
+          ...,
+          _type == "lessonLink" => {
+            "slug": lesson->slug.current
+          }
+        }
+      }
+    },
+    challenge
+  }
+`)
+
+export const lessonSlugs = defineQuery(`
+  *[_type == "lesson" && defined(slug.current)]
   {"slug": slug.current}
 `)

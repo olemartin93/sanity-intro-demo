@@ -15,6 +15,90 @@
 export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: ../sanity.schema.json
+export type Challenge = {
+  _type: 'challenge'
+  title: string
+  instructions: BlockContentTextOnly
+  verificationQuery?: string
+  hint?: string
+}
+
+export type GroqPlayground = {
+  _type: 'groqPlayground'
+  title: string
+  description?: string
+  query: string
+  params?: string
+}
+
+export type Callout = {
+  _type: 'callout'
+  kind: 'note' | 'tip' | 'warning'
+  title?: string
+  body: BlockContentTextOnly
+}
+
+export type LessonReference = {
+  _ref: string
+  _type: 'reference'
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: 'lesson'
+}
+
+export type SanityImageAssetReference = {
+  _ref: string
+  _type: 'reference'
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: 'sanity.imageAsset'
+}
+
+export type LessonContent = Array<
+  | {
+      children?: Array<{
+        marks?: Array<string>
+        text?: string
+        _type: 'span'
+        _key: string
+      }>
+      style?: 'normal' | 'h2' | 'h3' | 'blockquote'
+      listItem?: 'bullet' | 'number'
+      markDefs?: Array<
+        | {
+            href: string
+            _type: 'link'
+            _key: string
+          }
+        | {
+            lesson: LessonReference
+            _type: 'lessonLink'
+            _key: string
+          }
+      >
+      level?: number
+      _type: 'block'
+      _key: string
+    }
+  | ({
+      _key: string
+    } & Code)
+  | ({
+      _key: string
+    } & Callout)
+  | ({
+      _key: string
+    } & GroqPlayground)
+  | {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      alt: string
+      caption?: string
+      _type: 'image'
+      _key: string
+    }
+>
+
 export type PageReference = {
   _ref: string
   _type: 'reference'
@@ -36,13 +120,6 @@ export type Link = {
   page?: PageReference
   post?: PostReference
   openInNewTab?: boolean
-}
-
-export type SanityImageAssetReference = {
-  _ref: string
-  _type: 'reference'
-  _weak?: boolean
-  [internalGroqTypeReferenceTo]?: 'sanity.imageAsset'
 }
 
 export type CallToAction = {
@@ -127,6 +204,57 @@ export type Button = {
   link?: Link
 }
 
+export type Lesson = {
+  _id: string
+  _type: 'lesson'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  title: string
+  slug: Slug
+  summary: string
+  duration?: number
+  content?: LessonContent
+  challenge?: Challenge
+}
+
+export type SanityImageCrop = {
+  _type: 'sanity.imageCrop'
+  top: number
+  bottom: number
+  left: number
+  right: number
+}
+
+export type SanityImageHotspot = {
+  _type: 'sanity.imageHotspot'
+  x: number
+  y: number
+  height: number
+  width: number
+}
+
+export type Slug = {
+  _type: 'slug'
+  current: string
+  source?: string
+}
+
+export type Guide = {
+  _id: string
+  _type: 'guide'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  title: string
+  description: string
+  lessons?: Array<
+    {
+      _key: string
+    } & LessonReference
+  >
+}
+
 export type Settings = {
   _id: string
   _type: 'settings'
@@ -165,22 +293,6 @@ export type Settings = {
     metadataBase?: string
     _type: 'image'
   }
-}
-
-export type SanityImageCrop = {
-  _type: 'sanity.imageCrop'
-  top: number
-  bottom: number
-  left: number
-  right: number
-}
-
-export type SanityImageHotspot = {
-  _type: 'sanity.imageHotspot'
-  x: number
-  y: number
-  height: number
-  width: number
 }
 
 export type Page = {
@@ -248,12 +360,6 @@ export type Person = {
     alt?: string
     _type: 'image'
   }
-}
-
-export type Slug = {
-  _type: 'slug'
-  current: string
-  source?: string
 }
 
 export type SanityAssistInstructionTask = {
@@ -393,6 +499,14 @@ export type SanityAssistSchemaTypeField = {
   >
 }
 
+export type Code = {
+  _type: 'code'
+  language?: string
+  filename?: string
+  code?: string
+  highlightedLines?: Array<number>
+}
+
 export type SanityImagePaletteSwatch = {
   _type: 'sanity.imagePaletteSwatch'
   background?: string
@@ -491,23 +605,30 @@ export type Geopoint = {
 }
 
 export type AllSanitySchemaTypes =
+  | Challenge
+  | GroqPlayground
+  | Callout
+  | LessonReference
+  | SanityImageAssetReference
+  | LessonContent
   | PageReference
   | PostReference
   | Link
-  | SanityImageAssetReference
   | CallToAction
   | InfoSection
   | BlockContentTextOnly
   | BlockContent
   | Button
-  | Settings
+  | Lesson
   | SanityImageCrop
   | SanityImageHotspot
+  | Slug
+  | Guide
+  | Settings
   | Page
   | PersonReference
   | Post
   | Person
-  | Slug
   | SanityAssistInstructionTask
   | SanityAssistTaskStatus
   | SanityAssistSchemaTypeAnnotations
@@ -521,6 +642,7 @@ export type AllSanitySchemaTypes =
   | SanityAssistInstructionFieldRef
   | SanityAssistInstruction
   | SanityAssistSchemaTypeField
+  | Code
   | SanityImagePaletteSwatch
   | SanityImagePalette
   | SanityImageDimensions

@@ -15,6 +15,90 @@
 export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: ../sanity.schema.json
+export type Challenge = {
+  _type: 'challenge'
+  title: string
+  instructions: BlockContentTextOnly
+  verificationQuery?: string
+  hint?: string
+}
+
+export type GroqPlayground = {
+  _type: 'groqPlayground'
+  title: string
+  description?: string
+  query: string
+  params?: string
+}
+
+export type Callout = {
+  _type: 'callout'
+  kind: 'note' | 'tip' | 'warning'
+  title?: string
+  body: BlockContentTextOnly
+}
+
+export type LessonReference = {
+  _ref: string
+  _type: 'reference'
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: 'lesson'
+}
+
+export type SanityImageAssetReference = {
+  _ref: string
+  _type: 'reference'
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: 'sanity.imageAsset'
+}
+
+export type LessonContent = Array<
+  | {
+      children?: Array<{
+        marks?: Array<string>
+        text?: string
+        _type: 'span'
+        _key: string
+      }>
+      style?: 'normal' | 'h2' | 'h3' | 'blockquote'
+      listItem?: 'bullet' | 'number'
+      markDefs?: Array<
+        | {
+            href: string
+            _type: 'link'
+            _key: string
+          }
+        | {
+            lesson: LessonReference
+            _type: 'lessonLink'
+            _key: string
+          }
+      >
+      level?: number
+      _type: 'block'
+      _key: string
+    }
+  | ({
+      _key: string
+    } & Code)
+  | ({
+      _key: string
+    } & Callout)
+  | ({
+      _key: string
+    } & GroqPlayground)
+  | {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      alt: string
+      caption?: string
+      _type: 'image'
+      _key: string
+    }
+>
+
 export type PageReference = {
   _ref: string
   _type: 'reference'
@@ -36,13 +120,6 @@ export type Link = {
   page?: PageReference
   post?: PostReference
   openInNewTab?: boolean
-}
-
-export type SanityImageAssetReference = {
-  _ref: string
-  _type: 'reference'
-  _weak?: boolean
-  [internalGroqTypeReferenceTo]?: 'sanity.imageAsset'
 }
 
 export type CallToAction = {
@@ -127,6 +204,57 @@ export type Button = {
   link?: Link
 }
 
+export type Lesson = {
+  _id: string
+  _type: 'lesson'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  title: string
+  slug: Slug
+  summary: string
+  duration?: number
+  content?: LessonContent
+  challenge?: Challenge
+}
+
+export type SanityImageCrop = {
+  _type: 'sanity.imageCrop'
+  top: number
+  bottom: number
+  left: number
+  right: number
+}
+
+export type SanityImageHotspot = {
+  _type: 'sanity.imageHotspot'
+  x: number
+  y: number
+  height: number
+  width: number
+}
+
+export type Slug = {
+  _type: 'slug'
+  current: string
+  source?: string
+}
+
+export type Guide = {
+  _id: string
+  _type: 'guide'
+  _createdAt: string
+  _updatedAt: string
+  _rev: string
+  title: string
+  description: string
+  lessons?: Array<
+    {
+      _key: string
+    } & LessonReference
+  >
+}
+
 export type Settings = {
   _id: string
   _type: 'settings'
@@ -165,22 +293,6 @@ export type Settings = {
     metadataBase?: string
     _type: 'image'
   }
-}
-
-export type SanityImageCrop = {
-  _type: 'sanity.imageCrop'
-  top: number
-  bottom: number
-  left: number
-  right: number
-}
-
-export type SanityImageHotspot = {
-  _type: 'sanity.imageHotspot'
-  x: number
-  y: number
-  height: number
-  width: number
 }
 
 export type Page = {
@@ -248,12 +360,6 @@ export type Person = {
     alt?: string
     _type: 'image'
   }
-}
-
-export type Slug = {
-  _type: 'slug'
-  current: string
-  source?: string
 }
 
 export type SanityAssistInstructionTask = {
@@ -393,6 +499,14 @@ export type SanityAssistSchemaTypeField = {
   >
 }
 
+export type Code = {
+  _type: 'code'
+  language?: string
+  filename?: string
+  code?: string
+  highlightedLines?: Array<number>
+}
+
 export type SanityImagePaletteSwatch = {
   _type: 'sanity.imagePaletteSwatch'
   background?: string
@@ -491,23 +605,30 @@ export type Geopoint = {
 }
 
 export type AllSanitySchemaTypes =
+  | Challenge
+  | GroqPlayground
+  | Callout
+  | LessonReference
+  | SanityImageAssetReference
+  | LessonContent
   | PageReference
   | PostReference
   | Link
-  | SanityImageAssetReference
   | CallToAction
   | InfoSection
   | BlockContentTextOnly
   | BlockContent
   | Button
-  | Settings
+  | Lesson
   | SanityImageCrop
   | SanityImageHotspot
+  | Slug
+  | Guide
+  | Settings
   | Page
   | PersonReference
   | Post
   | Person
-  | Slug
   | SanityAssistInstructionTask
   | SanityAssistTaskStatus
   | SanityAssistSchemaTypeAnnotations
@@ -521,6 +642,7 @@ export type AllSanitySchemaTypes =
   | SanityAssistInstructionFieldRef
   | SanityAssistInstruction
   | SanityAssistSchemaTypeField
+  | Code
   | SanityImagePaletteSwatch
   | SanityImagePalette
   | SanityImageDimensions
@@ -656,8 +778,13 @@ export type GetPageQueryResult = {
 
 // Source: sanity/lib/queries.ts
 // Variable: sitemapData
-// Query: *[_type == "page" || _type == "post" && defined(slug.current)] | order(_type asc) {    "slug": slug.current,    _type,    _updatedAt,  }
+// Query: *[_type in ["page", "post", "lesson"] && defined(slug.current)] | order(_type asc) {    "slug": slug.current,    _type,    _updatedAt,  }
 export type SitemapDataResult = Array<
+  | {
+      slug: string
+      _type: 'lesson'
+      _updatedAt: string
+    }
   | {
       slug: string
       _type: 'page'
@@ -813,17 +940,120 @@ export type PagesSlugsResult = Array<{
   slug: string
 }>
 
+// Source: sanity/lib/queries.ts
+// Variable: guideQuery
+// Query: *[_type == "guide" && _id == "guide"][0]{    _id,    _type,    title,    description,    "lessons": lessons[defined(@->slug.current)]->{        _id,  _type,  title,  "slug": slug.current,  summary,  duration,  "hasChallenge": defined(challenge.title)    }  }
+export type GuideQueryResult = {
+  _id: 'guide'
+  _type: 'guide'
+  title: string
+  description: string
+  lessons: Array<{
+    _id: string
+    _type: 'lesson'
+    title: string
+    slug: string
+    summary: string
+    duration: number | null
+    hasChallenge: false | true
+  }> | null
+} | null
+
+// Source: sanity/lib/queries.ts
+// Variable: lessonQuery
+// Query: *[_type == "lesson" && slug.current == $slug][0]{    _id,    _type,    title,    "slug": slug.current,    summary,    duration,    content[]{      ...,      _type == "block" => {        markDefs[]{          ...,          _type == "lessonLink" => {            "slug": lesson->slug.current          }        }      }    },    challenge  }
+export type LessonQueryResult = {
+  _id: string
+  _type: 'lesson'
+  title: string
+  slug: string
+  summary: string
+  duration: number | null
+  content: Array<
+    | {
+        children?: Array<{
+          marks?: Array<string>
+          text?: string
+          _type: 'span'
+          _key: string
+        }>
+        style?: 'blockquote' | 'h2' | 'h3' | 'normal'
+        listItem?: 'bullet' | 'number'
+        markDefs: Array<
+          | {
+              lesson: LessonReference
+              _type: 'lessonLink'
+              _key: string
+              slug: string
+            }
+          | {
+              href: string
+              _type: 'link'
+              _key: string
+            }
+        > | null
+        level?: number
+        _type: 'block'
+        _key: string
+      }
+    | {
+        _key: string
+        _type: 'callout'
+        kind: 'note' | 'tip' | 'warning'
+        title?: string
+        body: BlockContentTextOnly
+      }
+    | {
+        _key: string
+        _type: 'code'
+        language?: string
+        filename?: string
+        code?: string
+        highlightedLines?: Array<number>
+      }
+    | {
+        _key: string
+        _type: 'groqPlayground'
+        title: string
+        description?: string
+        query: string
+        params?: string
+      }
+    | {
+        asset?: SanityImageAssetReference
+        media?: unknown
+        hotspot?: SanityImageHotspot
+        crop?: SanityImageCrop
+        alt: string
+        caption?: string
+        _type: 'image'
+        _key: string
+      }
+  > | null
+  challenge: Challenge | null
+} | null
+
+// Source: sanity/lib/queries.ts
+// Variable: lessonSlugs
+// Query: *[_type == "lesson" && defined(slug.current)]  {"slug": slug.current}
+export type LessonSlugsResult = Array<{
+  slug: string
+}>
+
 // Query TypeMap
 declare global {
   interface SanityQueries {
     '*[_type == "settings"][0]': SettingsQueryResult
     '\n  *[_type == \'page\' && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    slug,\n    heading,\n    subheading,\n    "pageBuilder": pageBuilder[]{\n      ...,\n      _type == "callToAction" => {\n        ...,\n        button {\n          ...,\n          \n  link {\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n      }\n\n        }\n      },\n      _type == "infoSection" => {\n        content[]{\n          ...,\n          markDefs[]{\n            ...,\n            \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n          }\n        }\n      },\n    },\n  }\n': GetPageQueryResult
-    '\n  *[_type == "page" || _type == "post" && defined(slug.current)] | order(_type asc) {\n    "slug": slug.current,\n    _type,\n    _updatedAt,\n  }\n': SitemapDataResult
+    '\n  *[_type in ["page", "post", "lesson"] && defined(slug.current)] | order(_type asc) {\n    "slug": slug.current,\n    _type,\n    _updatedAt,\n  }\n': SitemapDataResult
     '\n  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': AllPostsQueryResult
     '\n  *[_type == "post" && _id != $skip && defined(slug.current)] | order(date desc, _updatedAt desc) [0...$limit] {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': MorePostsQueryResult
     '\n  *[_type == "post" && slug.current == $slug] [0] {\n    content[]{\n    ...,\n    markDefs[]{\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n    }\n  },\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': PostQueryResult
     '\n  *[_type == "post" && defined(slug.current)]\n  {"slug": slug.current}\n': PostPagesSlugsResult
     '\n  *[_type == "page" && defined(slug.current)]\n  {"slug": slug.current}\n': PagesSlugsResult
+    '\n  *[_type == "guide" && _id == "guide"][0]{\n    _id,\n    _type,\n    title,\n    description,\n    "lessons": lessons[defined(@->slug.current)]->{\n      \n  _id,\n  _type,\n  title,\n  "slug": slug.current,\n  summary,\n  duration,\n  "hasChallenge": defined(challenge.title)\n\n    }\n  }\n': GuideQueryResult
+    '\n  *[_type == "lesson" && slug.current == $slug][0]{\n    _id,\n    _type,\n    title,\n    "slug": slug.current,\n    summary,\n    duration,\n    content[]{\n      ...,\n      _type == "block" => {\n        markDefs[]{\n          ...,\n          _type == "lessonLink" => {\n            "slug": lesson->slug.current\n          }\n        }\n      }\n    },\n    challenge\n  }\n': LessonQueryResult
+    '\n  *[_type == "lesson" && defined(slug.current)]\n  {"slug": slug.current}\n': LessonSlugsResult
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too

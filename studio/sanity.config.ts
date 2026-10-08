@@ -7,7 +7,7 @@ import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {visionTool} from '@sanity/vision'
 import {schemaTypes} from './src/schemaTypes'
-import {structure} from './src/structure'
+import {SINGLETON_TYPES, structure} from './src/structure'
 import {unsplashImageAsset} from 'sanity-plugin-asset-source-unsplash'
 import {
   presentationTool,
@@ -16,6 +16,7 @@ import {
   type DocumentLocation,
 } from 'sanity/presentation'
 import {assist} from '@sanity/assist'
+import {codeInput} from '@sanity/code-input'
 
 // Environment variables for project configuration
 const projectId = process.env.SANITY_STUDIO_PROJECT_ID || 'your-projectID'
@@ -38,6 +39,8 @@ function resolveHref(documentType?: string, slug?: string): string | undefined {
       return slug ? `/posts/${slug}` : undefined
     case 'page':
       return slug ? `/${slug}` : undefined
+    case 'lesson':
+      return slug ? `/guide/${slug}` : undefined
     default:
       console.warn('Invalid document type:', documentType)
       return undefined
@@ -76,9 +79,37 @@ export default defineConfig({
             route: '/posts/:slug',
             filter: `_type == "post" && slug.current == $slug || _id == $slug`,
           },
+          {
+            route: '/guide',
+            filter: `_type == "guide" && _id == "guide"`,
+          },
+          {
+            route: '/guide/:slug',
+            filter: `_type == "lesson" && slug.current == $slug || _id == $slug`,
+          },
         ]),
         // Locations Resolver API allows you to define where data is being used in your application. https://www.sanity.io/docs/visual-editing/presentation-resolver-api#8d8bca7bfcd7
         locations: {
+          guide: defineLocations({
+            locations: [{title: 'Guide', href: '/guide'}],
+            message: 'This document controls the guide overview and lesson order',
+            tone: 'positive',
+          }),
+          lesson: defineLocations({
+            select: {
+              title: 'title',
+              slug: 'slug.current',
+            },
+            resolve: (doc) => ({
+              locations: [
+                {
+                  title: doc?.title || 'Untitled',
+                  href: resolveHref('lesson', doc?.slug)!,
+                },
+                {title: 'Guide', href: '/guide'},
+              ],
+            }),
+          }),
           settings: defineLocations({
             locations: [homeLocation],
             message: 'This document is used on all pages',
@@ -124,6 +155,8 @@ export default defineConfig({
     }),
     // Additional plugins for enhanced functionality
     unsplashImageAsset(),
+    // Adds the `code` schema type with a syntax-highlighted editor. Used in lesson content.
+    codeInput(),
     assist(),
     visionTool(),
   ],
@@ -131,5 +164,18 @@ export default defineConfig({
   // Schema configuration, imported from ./src/schemaTypes/index.ts
   schema: {
     types: schemaTypes,
+    // Hide singleton types from the global "Create new document" menu
+    templates: (templates) =>
+      templates.filter(({schemaType}) => !SINGLETON_TYPES.includes(schemaType)),
+  },
+
+  document: {
+    // Singletons can be edited and published, but not duplicated or deleted
+    actions: (input, context) =>
+      SINGLETON_TYPES.includes(context.schemaType)
+        ? input.filter(
+            ({action}) => action && ['publish', 'discardChanges', 'restore'].includes(action),
+          )
+        : input,
   },
 })

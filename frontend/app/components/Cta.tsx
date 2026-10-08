@@ -17,7 +17,8 @@ type CtaProps = {
 export default function CTA({block}: CtaProps) {
   const {heading, eyebrow, body = [], button, image, theme, contentAlignment} = block
 
-  const isDark = theme === 'dark'
+  // Values used for logic must be stega-cleaned, or they won't match in Draft Mode / Presentation
+  const isDark = stegaClean(theme) === 'dark'
   const isImageFirst = stegaClean(contentAlignment) === 'imageFirst'
 
   return (

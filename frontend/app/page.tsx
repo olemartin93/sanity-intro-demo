@@ -60,6 +60,12 @@ export default async function Page() {
                 </div>
               )}
               <div className="flex items-center flex-col gap-4">
+                <Link
+                  href="/guide"
+                  className="not-prose inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 font-mono text-sm text-white no-underline transition-colors hover:bg-black md:text-base"
+                >
+                  New to Sanity? Start the interactive guide →
+                </Link>
                 <GetStartedCode />
                 <Link
                   href="https://www.sanity.io/docs"
