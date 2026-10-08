@@ -1,5 +1,5 @@
 import {defineField, defineType} from 'sanity'
-import {DocumentIcon} from '@sanity/icons'
+import {DocumentIcon} from '@sanity/icons/Document'
 
 /**
  * Page schema.  Define and edit the fields for the 'page' content type.

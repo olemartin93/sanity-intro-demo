@@ -2,13 +2,14 @@ import Link from 'next/link'
 
 import {sanityFetch} from '@/sanity/lib/live'
 import {morePostsQuery, allPostsQuery} from '@/sanity/lib/queries'
+import type {StegaBranded} from '@sanity/client/stega'
 import {AllPostsQueryResult} from '@/sanity.types'
 import DateComponent from '@/app/components/Date'
 import OnBoarding from '@/app/components/Onboarding'
 import Avatar from '@/app/components/Avatar'
 import {dataAttr} from '@/sanity/lib/utils'
 
-const Post = ({post}: {post: AllPostsQueryResult[number]}) => {
+const Post = ({post}: {post: StegaBranded<AllPostsQueryResult[number]>}) => {
   const {_id, title, slug, excerpt, date, author} = post
 
   return (
@@ -67,7 +68,7 @@ export const MorePosts = async ({skip, limit}: {skip: string; limit: number}) =>
 
   return (
     <Posts heading={`Recent Posts (${data?.length})`}>
-      {data?.map((post: AllPostsQueryResult[number]) => (
+      {data?.map((post) => (
         <Post key={post._id} post={post} />
       ))}
     </Posts>
@@ -86,7 +87,7 @@ export const AllPosts = async () => {
       heading="Recent Posts"
       subHeading={`${data.length === 1 ? 'This blog post is' : `These ${data.length} blog posts are`} populated from your Sanity Studio.`}
     >
-      {data.map((post: AllPostsQueryResult[number]) => (
+      {data.map((post) => (
         <Post key={post._id} post={post} />
       ))}
     </Posts>
